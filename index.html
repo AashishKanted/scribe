@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Simple animation for new receipts */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -41,8 +40,9 @@
                         ></textarea>
                         <div class="flex justify-between items-center">
                             <span id="char-counter" class="text-sm text-gray-500"></span>
-                            <button type="submit" id="submit-button" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                                Save Receipt
+                            <!-- CHANGED: Button is now disabled by default -->
+                            <button type="submit" id="submit-button" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                                Connecting...
                             </button>
                         </div>
                     </div>
@@ -61,43 +61,36 @@
             <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
                 <h2 class="text-2xl font-semibold mb-6">My Story</h2>
                 <div id="receipts-list" class="space-y-4 h-96 overflow-y-auto pr-2">
-                    <!-- Loading State -->
                     <div id="loading-state" class="text-center py-10">
                         <p class="text-gray-500">Loading your story...</p>
                     </div>
-                    <!-- Empty State -->
                     <div id="empty-state" class="text-center py-10 hidden">
                         <p class="text-gray-500">Your story begins here. Add your first receipt to get started.</p>
                     </div>
-                    <!-- Receipts will be injected here -->
                 </div>
             </div>
         </main>
     </div>
 
     <script type="module">
-        // IMPORTANT: PASTE YOUR FIREBASE CONFIGURATION HERE
+        // IMPORTANT: Your Firebase Config stays here
         const firebaseConfig = {
-            apiKey: "AIzaSyBB-HHaT_bzQm3O_joUOjdtr7-igIQ9YaE",
-            authDomain: "scribe-a7c82.firebaseapp.com",
-            projectId: "scribe-a7c82",
-            storageBucket: "scribe-a7c82.firebasestorage.app",
-            messagingSenderId: "841699939179",
-            appId: "1:841699939179:web:0612bdfdf1dcb2901b722e",
-            measurementId: "G-EFQ932E1QB"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DOM Elements
         const form = document.getElementById('receipt-form');
         const messageInput = document.getElementById('message-input');
         const submitButton = document.getElementById('submit-button');
@@ -109,25 +102,27 @@
 
         let currentUserId = null;
 
-        // --- AUTHENTICATION ---
         onAuthStateChanged(auth, user => {
             if (user) {
-                // User is signed in.
                 currentUserId = user.uid;
                 userIdDisplay.value = currentUserId;
                 fetchAndDisplayReceipts(currentUserId);
+
+                // --- CHANGED: Enable the button and change text now that we are signed in ---
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save Receipt';
+                // --------------------------------------------------------------------------
+
             } else {
-                // User is signed out. Sign in anonymously.
                 signInAnonymously(auth).catch(error => {
                     console.error("Anonymous sign-in failed:", error);
+                    submitButton.textContent = 'Auth Failed'; // Show error on button
                 });
             }
         });
 
-        // --- FIRESTORE OPERATIONS ---
-        
-        // Function to save a new receipt
         async function saveReceipt(message) {
+            // This check is now our backup, but the disabled button should prevent this from being hit.
             if (!currentUserId) {
                 alert("You must be signed in to save a receipt.");
                 return;
@@ -145,42 +140,36 @@
             }
         }
 
-        // Function to listen for and display receipts in real-time
         function fetchAndDisplayReceipts(userId) {
             const receiptsRef = collection(db, `users/${userId}/receipts`);
             const q = query(receiptsRef, orderBy("timestamp", "desc"));
 
             onSnapshot(q, (querySnapshot) => {
                 loadingState.classList.add('hidden');
-                receiptsList.innerHTML = ''; // Clear previous list
                 
                 if (querySnapshot.empty) {
                     emptyState.classList.remove('hidden');
+                    receiptsList.innerHTML = ''; 
                 } else {
                     emptyState.classList.add('hidden');
+                    receiptsList.innerHTML = '';
+                    querySnapshot.forEach((doc) => {
+                        const receipt = doc.data();
+                        const receiptElement = document.createElement('div');
+                        receiptElement.classList.add('p-4', 'bg-gray-100', 'rounded-lg', 'new-receipt');
+                        receiptElement.innerHTML = `
+                            <p class="text-gray-800">${receipt.message}</p>
+                            <p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || 'Just now'}</p>
+                        `;
+                        receiptsList.appendChild(receiptElement);
+                    });
                 }
-
-                querySnapshot.forEach((doc) => {
-                    const receipt = doc.data();
-                    const receiptElement = document.createElement('div');
-                    receiptElement.classList.add('p-4', 'bg-gray-100', 'rounded-lg', 'new-receipt');
-                    
-                    receiptElement.innerHTML = `
-                        <p class="text-gray-800">${receipt.message}</p>
-                        <p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || 'Just now'}</p>
-                    `;
-                    receiptsList.appendChild(receiptElement);
-                });
             }, (error) => {
                 console.error("Error fetching receipts:", error);
                 loadingState.innerText = "Error loading receipts.";
             });
         }
 
-
-        // --- EVENT LISTENERS ---
-        
-        // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = messageInput.value.trim();
@@ -194,7 +183,6 @@
             }
         });
 
-        // Copy User ID to clipboard
         copyButton.addEventListener('click', () => {
             userIdDisplay.select();
             document.execCommand('copy');
@@ -207,3 +195,4 @@
     </script>
 </body>
 </html>
+
