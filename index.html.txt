@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Receipts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Simple animation for new receipts */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .new-receipt {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center p-4 bg-gray-50 text-gray-800">
+    <div class="w-full max-w-6xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold tracking-tight text-gray-900">Life Receipts</h1>
+            <p class="mt-2 text-lg text-gray-600">Your personal story, one moment at a time.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- Left Column: Input Form -->
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-semibold mb-6">Add a New Receipt</h2>
+                <form id="receipt-form">
+                    <div class="space-y-4">
+                        <textarea
+                            id="message-input"
+                            name="message"
+                            rows="5"
+                            class="w-full p-4 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
+                            placeholder="What did you achieve or learn today?"
+                            required
+                        ></textarea>
+                        <div class="flex justify-between items-center">
+                            <span id="char-counter" class="text-sm text-gray-500"></span>
+                            <button type="submit" id="submit-button" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                                Save Receipt
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                 <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700">Your User ID</h3>
+                    <p class="text-sm text-gray-500 mt-1">Share this ID with a friend to let them view your story (read-only).</p>
+                    <div class="mt-3 flex items-center bg-gray-100 rounded-lg p-2">
+                        <input type="text" id="user-id-display" readonly class="flex-grow bg-transparent text-gray-600 font-mono text-sm border-0 focus:ring-0">
+                        <button id="copy-button" class="ml-2 px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Receipt List -->
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-2xl font-semibold mb-6">My Story</h2>
+                <div id="receipts-list" class="space-y-4 h-96 overflow-y-auto pr-2">
+                    <!-- Loading State -->
+                    <div id="loading-state" class="text-center py-10">
+                        <p class="text-gray-500">Loading your story...</p>
+                    </div>
+                    <!-- Empty State -->
+                    <div id="empty-state" class="text-center py-10 hidden">
+                        <p class="text-gray-500">Your story begins here. Add your first receipt to get started.</p>
+                    </div>
+                    <!-- Receipts will be injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // IMPORTANT: PASTE YOUR FIREBASE CONFIGURATION HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBB-HHaT_bzQm3O_joUOjdtr7-igIQ9YaE",
+            authDomain: "scribe-a7c82.firebaseapp.com",
+            projectId: "scribe-a7c82",
+            storageBucket: "scribe-a7c82.firebasestorage.app",
+            messagingSenderId: "841699939179",
+            appId: "1:841699939179:web:0612bdfdf1dcb2901b722e",
+            measurementId: "G-EFQ932E1QB"
+        };
+
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM Elements
+        const form = document.getElementById('receipt-form');
+        const messageInput = document.getElementById('message-input');
+        const submitButton = document.getElementById('submit-button');
+        const receiptsList = document.getElementById('receipts-list');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const copyButton = document.getElementById('copy-button');
+
+        let currentUserId = null;
+
+        // --- AUTHENTICATION ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // User is signed in.
+                currentUserId = user.uid;
+                userIdDisplay.value = currentUserId;
+                fetchAndDisplayReceipts(currentUserId);
+            } else {
+                // User is signed out. Sign in anonymously.
+                signInAnonymously(auth).catch(error => {
+                    console.error("Anonymous sign-in failed:", error);
+                });
+            }
+        });
+
+        // --- FIRESTORE OPERATIONS ---
+        
+        // Function to save a new receipt
+        async function saveReceipt(message) {
+            if (!currentUserId) {
+                alert("You must be signed in to save a receipt.");
+                return;
+            }
+            try {
+                const docRef = await addDoc(collection(db, `users/${currentUserId}/receipts`), {
+                    message: message,
+                    timestamp: serverTimestamp(),
+                    dateString: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                });
+                console.log("Document written with ID: ", docRef.id);
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                alert("There was an error saving your receipt.");
+            }
+        }
+
+        // Function to listen for and display receipts in real-time
+        function fetchAndDisplayReceipts(userId) {
+            const receiptsRef = collection(db, `users/${userId}/receipts`);
+            const q = query(receiptsRef, orderBy("timestamp", "desc"));
+
+            onSnapshot(q, (querySnapshot) => {
+                loadingState.classList.add('hidden');
+                receiptsList.innerHTML = ''; // Clear previous list
+                
+                if (querySnapshot.empty) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const receipt = doc.data();
+                    const receiptElement = document.createElement('div');
+                    receiptElement.classList.add('p-4', 'bg-gray-100', 'rounded-lg', 'new-receipt');
+                    
+                    receiptElement.innerHTML = `
+                        <p class="text-gray-800">${receipt.message}</p>
+                        <p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || 'Just now'}</p>
+                    `;
+                    receiptsList.appendChild(receiptElement);
+                });
+            }, (error) => {
+                console.error("Error fetching receipts:", error);
+                loadingState.innerText = "Error loading receipts.";
+            });
+        }
+
+
+        // --- EVENT LISTENERS ---
+        
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Saving...';
+                await saveReceipt(message);
+                form.reset();
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save Receipt';
+            }
+        });
+
+        // Copy User ID to clipboard
+        copyButton.addEventListener('click', () => {
+            userIdDisplay.select();
+            document.execCommand('copy');
+            copyButton.textContent = 'Copied!';
+            setTimeout(() => {
+                copyButton.textContent = 'Copy';
+            }, 2000);
+        });
+
+    </script>
+</body>
+</html>
