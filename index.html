@@ -446,7 +446,7 @@
             const deleteReceiptFn = httpsCallable(functions, 'deleteReceipt');
             try {
                 await deleteReceiptFn({ receiptId: receiptToDelete });
-                document.getElementById(`receipt-${receiptToDelete}`).remove();
+                // The onSnapshot listener will automatically remove the element from the UI
             } catch(error) {
                 console.error("Error deleting receipt:", error);
                 alert("Could not delete the receipt.");
@@ -468,7 +468,7 @@
             const editReceiptFn = httpsCallable(functions, 'editReceipt');
             try {
                 await editReceiptFn({ receiptId: receiptToEdit, newText });
-                document.querySelector(`#receipt-${receiptToEdit} p`).textContent = newText;
+                 // The onSnapshot listener will automatically update the element in the UI
             } catch(error) {
                 console.error("Error editing receipt:", error);
                 alert("Could not save changes.");
