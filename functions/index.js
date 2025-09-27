@@ -1,23 +1,24 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const {GoogleAuth} = require("google-auth-library");
-const {DiscussServiceClient} = require("@google-ai/generativelanguage");
+const {GoogleGenerativeAI} = require("@google/generative-ai");
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
 const db = admin.firestore();
 
 // Initialize Google AI Client
-const MODEL_NAME = "models/gemini-2.5-flash-preview-05-20";
-// Securely access the API key
+const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 const API_KEY = functions.config().gemini.key;
 
-const client = new DiscussServiceClient({
-  authClient: new GoogleAuth().fromAPIKey(API_KEY),
-});
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({model: MODEL_NAME});
 
+/**
+ * Takes a raw note and uses AI to enhance it, using both long-term memory
+ * and recent receipts for context.
+ */
 exports.getEnhancedReceipt = functions.https.onCall(async (data, context) => {
-  // Ensure the user is authenticated
+  // Authentication check
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -25,19 +26,25 @@ exports.getEnhancedReceipt = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const rawText = data.text;
-  const uid = context.auth.token.uid;
+  const {text: rawText} = data;
+  const {uid} = context.auth.token;
 
   if (!rawText) {
     throw new functions.https.HttpsError(
         "invalid-argument",
-        "The function must be called with one argument 'text' " +
-        "containing the message to rewrite.",
+        "The function must be called with 'text' containing the message.",
     );
   }
 
   try {
-    // 1. Fetch recent receipts for context
+    // 1. Fetch long-term memory
+    const memoryRef = db.doc(`users/${uid}/memory/summary`);
+    const memoryDoc = await memoryRef.get();
+    const memorySummary = memoryDoc.exists() ?
+      memoryDoc.data().summary :
+      "No long-term memory yet.";
+
+    // 2. Fetch recent receipts for short-term context
     const receiptsRef = db
         .collection(`users/${uid}/receipts`)
         .orderBy("timestamp", "desc")
@@ -47,41 +54,31 @@ exports.getEnhancedReceipt = functions.https.onCall(async (data, context) => {
     snapshot.forEach((doc) => {
       recentReceipts.push(doc.data());
     });
-
-    // Reverse to get chronological order
-    const contextText = recentReceipts
+    const contextHistory = recentReceipts
         .reverse()
         .map((r) => `- ${r.message}`)
         .join("\n");
 
-    // 2. Construct the prompt
-    const prompt = [
-      "You are a supportive and insightful biographer.",
-      "Your task is to take a raw note from a user and expand it into a",
-      "beautifully written, reflective journal entry of 2-3 sentences.",
-      "Frame it as a significant moment in their life story.",
-      "",
-      "Use the following recent entries as context to understand recurring",
-      "themes or ongoing stories. This context should inform the tone and",
-      "perspective of your writing, but do not explicitly reference these",
-      "past entries.",
-      "CONTEXT of the last few entries:",
-      contextText || "No recent entries.",
-      "",
-      "Now, based on that context, please rephrase the following NEW NOTE:",
-      `NEW NOTE: "${rawText}"`,
-    ].join("\n");
+    // 3. Construct the detailed prompt
+    const prompt = `You are a supportive biographer. Expand the following raw
+note into a reflective journal entry. The final output must be a single
+paragraph under 200 characters.
 
-    // 3. Call the Gemini API
-    const result = await client.generateMessage({
-      model: MODEL_NAME,
-      prompt: {
-        messages: [{content: prompt}],
-      },
-    });
+Use the following long-term memory and recent entries for deep context.
 
-    // 4. Return the result
-    const enhancedText = result[0].candidates[0].content;
+LONG-TERM MEMORY:
+${memorySummary}
+
+RECENT ENTRIES:
+${contextHistory || "No recent entries."}
+
+NEW NOTE: "${rawText}"`;
+
+
+    // 4. Call the Gemini API and return the result
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const enhancedText = response.text();
     return {text: enhancedText};
   } catch (error) {
     console.error("Error calling Gemini API:", error);
@@ -91,3 +88,68 @@ exports.getEnhancedReceipt = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+/**
+ * Automatically updates the user's long-term memory file
+ * after every 5 new receipts are created.
+ */
+exports.updateMemoryOnNewReceipt = functions.firestore
+    .document("users/{userId}/receipts/{receiptId}")
+    .onCreate(async (snap, context) => {
+      const {userId} = context.params;
+      const userRef = db.doc(`users/${userId}`);
+
+      // Use a transaction to safely increment a counter
+      return db.runTransaction(async (transaction) => {
+        const userDoc = await transaction.get(userRef);
+        const newCount = (userDoc.data().receiptCount || 0) + 1;
+        transaction.update(userRef, {receiptCount: newCount});
+
+        // Only run the memory update every 5 receipts
+        if (newCount % 5 !== 0) {
+          return null; // Exit early
+        }
+
+        console.log(`Updating memory for user ${userId} at ${newCount} receipts.`);
+
+        // 1. Get the last 15 receipts
+        const receiptsQuery = db
+            .collection(`users/${userId}/receipts`)
+            .orderBy("timestamp", "desc")
+            .limit(15);
+        const receiptsSnap = await receiptsQuery.get();
+        const recentHistory = receiptsSnap.docs
+            .map((d) => `- ${d.data().message}`)
+            .reverse()
+            .join("\n");
+
+        // 2. Get the current memory summary
+        const memoryRef = db.doc(`users/${userId}/memory/summary`);
+        const memoryDoc = await memoryRef.get();
+        const currentMemory = memoryDoc.exists() ? memoryDoc.data().summary : "";
+
+        // 3. Construct the memory update prompt
+        const prompt = `You are a memory curator. Here is the user's
+current memory summary and their newest journal entries.
+Integrate the new information into the existing summary, keeping it concise
+(under 500 characters) and focused on key facts, themes, and goals.
+Output only the updated summary, not conversational text.
+
+CURRENT SUMMARY:
+${currentMemory || "No summary yet."}
+
+NEW ENTRIES:
+${recentHistory}`;
+
+        // 4. Call Gemini and save the new summary
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const newSummary = response.text();
+
+        return transaction.set(memoryRef, {
+          summary: newSummary,
+          lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+    });
+
