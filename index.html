@@ -12,44 +12,47 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .new-receipt {
-            animation: fadeIn 0.5s ease-out;
-        }
+        .new-receipt { animation: fadeIn 0.5s ease-out; }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="h-full flex items-center justify-center p-4 bg-gray-50 text-gray-800">
-    <div class="w-full max-w-6xl mx-auto">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-bold tracking-tight text-gray-900">Life Receipts</h1>
-            <p class="mt-2 text-lg text-gray-600">Your personal story, one moment at a time.</p>
+<body class="h-full antialiased text-gray-800">
+
+    <!-- NEW: Login Screen -->
+    <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen p-4">
+        <h1 class="text-4xl font-bold tracking-tight text-gray-900">Life Receipts</h1>
+        <p class="mt-2 text-lg text-gray-600">Your personal story, one moment at a time.</p>
+        <button id="sign-in-button" class="mt-8 flex items-center justify-center px-6 py-3 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+            <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.269l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.269z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C41.38,36.168,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+            Sign in with Google
+        </button>
+    </div>
+
+    <!-- NEW: Main Application Content (hidden by default) -->
+    <div id="app-content" class="w-full max-w-7xl mx-auto hidden">
+        <header class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Life Receipts</h1>
+            <!-- NEW: User Profile Display -->
+            <div id="user-profile" class="flex items-center space-x-4">
+                <img id="user-photo" class="w-10 h-10 rounded-full" src="" alt="User photo">
+                <span id="user-name" class="font-semibold text-gray-700"></span>
+                <button id="sign-out-button" class="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-100">Sign Out</button>
+            </div>
         </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <!-- Left Column: Input Form -->
-            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                <h2 class="text-2xl font-semibold mb-6">Add a New Receipt</h2>
-                <form id="receipt-form">
-                    <div class="space-y-4">
-                        <textarea
-                            id="message-input"
-                            name="message"
-                            rows="5"
-                            class="w-full p-4 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200"
-                            placeholder="What did you achieve or learn today?"
-                            required
-                        ></textarea>
-                        <div class="flex justify-between items-center">
-                            <span id="char-counter" class="text-sm text-gray-500"></span>
-                            <!-- CHANGED: Button is now disabled by default -->
-                            <button type="submit" id="submit-button" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                                Connecting...
-                            </button>
-                        </div>
-                    </div>
-                </form>
-                 <div class="mt-8 pt-6 border-t border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-700">Your User ID</h3>
-                    <p class="text-sm text-gray-500 mt-1">Share this ID with a friend to let them view your story (read-only).</p>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Input and User Info -->
+            <div class="lg:col-span-1 space-y-8">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h2 class="text-xl font-semibold mb-4">Add a New Receipt</h2>
+                    <form id="receipt-form">
+                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="What's on your mind?" required></textarea>
+                        <button type="submit" id="submit-button" class="w-full mt-4 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-transform transform hover:scale-105">Save Receipt</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h3 class="text-xl font-semibold text-gray-700">Your User ID</h3>
+                    <p class="text-sm text-gray-500 mt-1">Share this with a friend so they can view your story.</p>
                     <div class="mt-3 flex items-center bg-gray-100 rounded-lg p-2">
                         <input type="text" id="user-id-display" readonly class="flex-grow bg-transparent text-gray-600 font-mono text-sm border-0 focus:ring-0">
                         <button id="copy-button" class="ml-2 px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300">Copy</button>
@@ -57,129 +60,178 @@
                 </div>
             </div>
 
-            <!-- Right Column: Receipt List -->
-            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                <h2 class="text-2xl font-semibold mb-6">My Story</h2>
-                <div id="receipts-list" class="space-y-4 h-96 overflow-y-auto pr-2">
-                    <div id="loading-state" class="text-center py-10">
-                        <p class="text-gray-500">Loading your story...</p>
-                    </div>
-                    <div id="empty-state" class="text-center py-10 hidden">
-                        <p class="text-gray-500">Your story begins here. Add your first receipt to get started.</p>
-                    </div>
+            <!-- Center Column: My Story -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4">My Story</h2>
+                <div id="my-receipts-list" class="space-y-4 h-[60vh] overflow-y-auto pr-2">
+                    <div id="my-loading-state" class="text-center py-10 text-gray-500">Loading...</div>
+                    <div id="my-empty-state" class="text-center py-10 text-gray-500 hidden">Your story starts here.</div>
+                </div>
+            </div>
+
+            <!-- Right Column: Friend's Story -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4">Friend's Story</h2>
+                <div class="flex space-x-2">
+                    <input type="text" id="friend-id-input" placeholder="Paste friend's User ID" class="w-full p-2 border border-gray-300 rounded-lg">
+                    <button id="load-friend-button" class="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Load</button>
+                </div>
+                <div id="friend-receipts-list" class="mt-4 space-y-4 h-[52vh] overflow-y-auto pr-2">
+                     <div class="text-center py-10 text-gray-500">Enter a friend's ID to see their story.</div>
                 </div>
             </div>
         </main>
     </div>
 
     <script type="module">
-        // IMPORTANT: Your Firebase Config stays here
+        // Your Firebase Config stays here
         const firebaseConfig = {
-            apiKey: "AIzaSyBB-HHaT_bzQm3O_joUOjdtr7-igIQ9YaE",
-            authDomain: "scribe-a7c82.firebaseapp.com",
-            projectId: "scribe-a7c82",
-            storageBucket: "scribe-a7c82.firebasestorage.app",
-            messagingSenderId: "841699939179",
-            appId: "1:841699939179:web:0612bdfdf1dcb2901b722e",
-            measurementId: "G-EFQ932E1QB"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContent = document.getElementById('app-content');
+        const signInButton = document.getElementById('sign-in-button');
+        const signOutButton = document.getElementById('sign-out-button');
+        const userPhoto = document.getElementById('user-photo');
+        const userName = document.getElementById('user-name');
+        
         const form = document.getElementById('receipt-form');
         const messageInput = document.getElementById('message-input');
         const submitButton = document.getElementById('submit-button');
-        const receiptsList = document.getElementById('receipts-list');
-        const loadingState = document.getElementById('loading-state');
-        const emptyState = document.getElementById('empty-state');
+        
+        const myReceiptsList = document.getElementById('my-receipts-list');
+        const myLoadingState = document.getElementById('my-loading-state');
+        const myEmptyState = document.getElementById('my-empty-state');
+        
         const userIdDisplay = document.getElementById('user-id-display');
         const copyButton = document.getElementById('copy-button');
 
+        const friendIdInput = document.getElementById('friend-id-input');
+        const loadFriendButton = document.getElementById('load-friend-button');
+        const friendReceiptsList = document.getElementById('friend-receipts-list');
+        
         let currentUserId = null;
+        let unsubscribeMyReceipts = null; // To stop listening to old user's data on logout
+
+        // --- AUTHENTICATION LOGIC ---
+        const provider = new GoogleAuthProvider();
+
+        signInButton.addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(error => console.error("Sign in error", error));
+        });
+
+        signOutButton.addEventListener('click', () => {
+            signOut(auth).catch(error => console.error("Sign out error", error));
+        });
 
         onAuthStateChanged(auth, user => {
-            if (user) {
+            if (user) { // User is signed in
                 currentUserId = user.uid;
-                userIdDisplay.value = currentUserId;
-                fetchAndDisplayReceipts(currentUserId);
 
-                // --- CHANGED: Enable the button and change text now that we are signed in ---
-                submitButton.disabled = false;
-                submitButton.textContent = 'Save Receipt';
-                // --------------------------------------------------------------------------
+                // Update UI
+                loginScreen.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                
+                userName.textContent = user.displayName;
+                userPhoto.src = user.photoURL;
+                userIdDisplay.value = user.uid;
 
-            } else {
-                signInAnonymously(auth).catch(error => {
-                    console.error("Anonymous sign-in failed:", error);
-                    submitButton.textContent = 'Auth Failed'; // Show error on button
-                });
+                // Fetch user's own receipts
+                fetchAndDisplayReceipts(user.uid, myReceiptsList, myLoadingState, myEmptyState);
+            } else { // User is signed out
+                currentUserId = null;
+
+                // Update UI
+                loginScreen.classList.remove('hidden');
+                appContent.classList.add('hidden');
+
+                // Stop listening to previous user's data to prevent errors
+                if (unsubscribeMyReceipts) {
+                    unsubscribeMyReceipts();
+                }
             }
         });
 
+        // --- FIRESTORE LOGIC ---
         async function saveReceipt(message) {
-            // This check is now our backup, but the disabled button should prevent this from being hit.
-            if (!currentUserId) {
-                alert("You must be signed in to save a receipt.");
-                return;
-            }
+            if (!currentUserId) return;
             try {
-                const docRef = await addDoc(collection(db, `users/${currentUserId}/receipts`), {
+                await addDoc(collection(db, `users/${currentUserId}/receipts`), {
                     message: message,
                     timestamp: serverTimestamp(),
-                    dateString: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                    dateString: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
                 });
-                console.log("Document written with ID: ", docRef.id);
             } catch (error) {
                 console.error("Error adding document: ", error);
-                alert("There was an error saving your receipt.");
             }
         }
 
-        function fetchAndDisplayReceipts(userId) {
-            const receiptsRef = collection(db, `users/${userId}/receipts`);
+        function fetchAndDisplayReceipts(uid, targetList, loadingEl, emptyEl) {
+            if (!uid) return;
+            
+            const receiptsRef = collection(db, `users/${uid}/receipts`);
             const q = query(receiptsRef, orderBy("timestamp", "desc"));
 
-            onSnapshot(q, (querySnapshot) => {
-                loadingState.classList.add('hidden');
+            // If we are fetching our own receipts, store the listener to unsubscribe on logout
+            if (uid === currentUserId) {
+                if (unsubscribeMyReceipts) unsubscribeMyReceipts(); // Unsubscribe from any previous listener
+                unsubscribeMyReceipts = createSnapshotListener(q, targetList, loadingEl, emptyEl);
+            } else {
+                // For friends, it's a one-time fetch for now, but onSnapshot is fine
+                createSnapshotListener(q, targetList, loadingEl, emptyEl);
+            }
+        }
+        
+        // Helper function to create the listener
+        function createSnapshotListener(q, targetList, loadingEl, emptyEl) {
+            loadingEl.style.display = 'block';
+            emptyEl.classList.add('hidden');
+
+            return onSnapshot(q, (querySnapshot) => {
+                loadingEl.style.display = 'none';
+                targetList.innerHTML = ''; // Clear previous list
                 
                 if (querySnapshot.empty) {
-                    emptyState.classList.remove('hidden');
-                    receiptsList.innerHTML = ''; 
+                    emptyEl.classList.remove('hidden');
                 } else {
-                    emptyState.classList.add('hidden');
-                    receiptsList.innerHTML = '';
+                    emptyEl.classList.add('hidden');
                     querySnapshot.forEach((doc) => {
                         const receipt = doc.data();
                         const receiptElement = document.createElement('div');
-                        receiptElement.classList.add('p-4', 'bg-gray-100', 'rounded-lg', 'new-receipt');
-                        receiptElement.innerHTML = `
-                            <p class="text-gray-800">${receipt.message}</p>
-                            <p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || 'Just now'}</p>
-                        `;
-                        receiptsList.appendChild(receiptElement);
+                        receiptElement.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'new-receipt');
+                        receiptElement.innerHTML = `<p class="text-gray-800">${receipt.message}</p><p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || ''}</p>`;
+                        targetList.appendChild(receiptElement);
                     });
                 }
             }, (error) => {
                 console.error("Error fetching receipts:", error);
-                loadingState.innerText = "Error loading receipts.";
+                loadingEl.innerText = "Error loading.";
             });
         }
 
+        // --- EVENT LISTENERS ---
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = messageInput.value.trim();
             if (message) {
-                submitButton.disabled = true;
                 submitButton.textContent = 'Saving...';
                 await saveReceipt(message);
                 form.reset();
-                submitButton.disabled = false;
                 submitButton.textContent = 'Save Receipt';
             }
         });
@@ -188,9 +240,26 @@
             userIdDisplay.select();
             document.execCommand('copy');
             copyButton.textContent = 'Copied!';
-            setTimeout(() => {
-                copyButton.textContent = 'Copy';
-            }, 2000);
+            setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
+        });
+        
+        loadFriendButton.addEventListener('click', () => {
+            const friendId = friendIdInput.value.trim();
+            if (friendId) {
+                const friendLoadingEl = document.createElement('div');
+                friendLoadingEl.className = 'text-center py-10 text-gray-500';
+                friendLoadingEl.textContent = 'Loading friend\'s story...';
+
+                const friendEmptyEl = document.createElement('div');
+                friendEmptyEl.className = 'text-center py-10 text-gray-500 hidden';
+                friendEmptyEl.textContent = 'This person hasn\'t written anything yet.';
+                
+                friendReceiptsList.innerHTML = ''; // Clear previous friend's list
+                friendReceiptsList.appendChild(friendLoadingEl);
+                friendReceiptsList.appendChild(friendEmptyEl);
+                
+                fetchAndDisplayReceipts(friendId, friendReceiptsList, friendLoadingEl, friendEmptyEl);
+            }
         });
 
     </script>
