@@ -14,7 +14,6 @@
         }
         .new-item { animation: fadeIn 0.5s ease-out; }
         .hidden { display: none; }
-        /* Custom scrollbar for a cleaner look */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -50,8 +49,13 @@
                 <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
                     <h2 class="text-xl font-semibold mb-4">Add a New Receipt</h2>
                     <form id="receipt-form">
-                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="A new entry in your story..." required></textarea>
-                        <button type="submit" id="submit-button" class="w-full mt-4 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-transform transform hover:scale-105">Save Receipt</button>
+                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="Write a quick note about your achievement..." required></textarea>
+                        <div class="flex items-center space-x-2 mt-4">
+                            <button type="submit" id="submit-button" class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-transform transform hover:scale-105">Save Receipt</button>
+                            <button type="button" id="ai-scribe-button" class="px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105" title="Let AI rewrite your note">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l.707-.707M6.343 17.657l-.707.707m12.728 0l.707.707M12 21v-1m-4.636-1.636l.707-.707m0 0a5 5 0 10-7.072 0l.001.001 7.07 7.071 7.072-7.07z" /></svg>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -80,25 +84,20 @@
     </div>
 
     <script type="module">
-        // Your Firebase Config stays here
-        const firebaseConfig = {
-            apiKey: "AIzaSyBB-HHaT_bzQm3O_joUOjdtr7-igIQ9YaE",
-            authDomain: "scribe-a7c82.firebaseapp.com",
-            projectId: "scribe-a7c82",
-            storageBucket: "scribe-a7c82.firebasestorage.app",
-            messagingSenderId: "841699939179",
-            appId: "1:841699939179:web:0612bdfdf1dcb2901b722e",
-            measurementId: "G-EFQ932E1QB"
-        };
-
+        import { firebaseConfig } from './firebase-config.js';
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, arrayUnion, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const functions = getFunctions(app);
+        
+        // Define the Cloud Function callable
+        const getEnhancedReceipt = httpsCallable(functions, 'getEnhancedReceipt');
 
         // DOM Elements
         const loginScreen = document.getElementById('login-screen');
@@ -110,6 +109,7 @@
         
         const form = document.getElementById('receipt-form');
         const messageInput = document.getElementById('message-input');
+        const aiScribeButton = document.getElementById('ai-scribe-button');
         
         const storyViewerTitle = document.getElementById('story-viewer-title');
         const storyViewerList = document.getElementById('story-viewer-list');
@@ -142,6 +142,7 @@
             }
         });
 
+        // --- UI Setup Functions ---
         function setupUIForLoggedInUser(user) {
             loginScreen.classList.add('hidden');
             appContent.classList.remove('hidden');
@@ -159,11 +160,36 @@
             const profileRef = doc(db, 'profiles', user.uid);
             await setDoc(profileRef, {
                 uid: user.uid,
-                email: user.email,
+                email: user.email.toLowerCase(),
                 displayName: user.displayName,
                 photoURL: user.photoURL
             }, { merge: true });
         }
+        
+        // --- AI SCRIBE LOGIC ---
+        aiScribeButton.addEventListener('click', async () => {
+            const rawText = messageInput.value.trim();
+            if (!rawText) {
+                alert("Please write a note first.");
+                return;
+            }
+
+            const originalButtonContent = aiScribeButton.innerHTML;
+            aiScribeButton.disabled = true;
+            aiScribeButton.innerHTML = `<svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            try {
+                // Securely call the Cloud Function
+                const result = await getEnhancedReceipt({ text: rawText });
+                messageInput.value = result.data.text;
+            } catch (error) {
+                console.error("AI Scribe Error:", error);
+                alert("The AI Scribe couldn't rewrite your note. Please check the console for details.");
+            } finally {
+                aiScribeButton.disabled = false;
+                aiScribeButton.innerHTML = originalButtonContent;
+            }
+        });
 
         // --- FRIENDS LOGIC ---
         addFriendForm.addEventListener('submit', async (e) => {
@@ -184,19 +210,13 @@
             try {
                 const q = query(collection(db, "profiles"), where("email", "==", email));
                 const querySnapshot = await getDocs(q);
-                
                 if (querySnapshot.empty) {
                     alert("User not found. Make sure your friend has logged in at least once.");
                     return;
                 }
-
                 const friendProfile = querySnapshot.docs[0].data();
-                const friendUid = friendProfile.uid;
-
                 const myProfileRef = doc(db, 'profiles', currentUser.uid);
-                await updateDoc(myProfileRef, {
-                    friends: arrayUnion(friendUid)
-                });
+                await updateDoc(myProfileRef, { friends: arrayUnion(friendProfile.uid) });
                 alert(`Added ${friendProfile.displayName} as a friend!`);
             } catch (error) {
                 console.error("Error adding friend:", error);
@@ -207,31 +227,25 @@
         function listenForFriends(uid) {
             const myProfileRef = doc(db, 'profiles', uid);
             onSnapshot(myProfileRef, async (docSnap) => {
-                if (!docSnap.exists() || !docSnap.data().friends) {
-                    friendsEmptyState.classList.remove('hidden');
-                    friendsList.innerHTML = '';
-                    friendsList.appendChild(friendsEmptyState);
-                    return;
-                }
-
-                const friendUids = docSnap.data().friends;
-                friendsList.innerHTML = ''; // Clear list
-
-                if (friendUids.length === 0) {
-                     friendsEmptyState.classList.remove('hidden');
-                     friendsList.appendChild(friendsEmptyState);
-                     return;
-                }
+                const friendsContainer = document.getElementById('friends-list');
+                const emptyState = document.getElementById('friends-empty-state');
                 
-                // Add a button to view my own story
+                friendsContainer.innerHTML = '';
+                
                 renderFriendItem({ uid: currentUser.uid, displayName: "My Story", photoURL: currentUser.photoURL }, true);
 
-                // Fetch and render friend profiles
-                for (const friendUid of friendUids) {
-                    const friendProfileSnap = await getDoc(doc(db, 'profiles', friendUid));
-                    if (friendProfileSnap.exists()) {
-                        renderFriendItem(friendProfileSnap.data());
+                if (docSnap.exists() && docSnap.data().friends && docSnap.data().friends.length > 0) {
+                    emptyState.classList.add('hidden');
+                    const friendUids = docSnap.data().friends;
+                    for (const friendUid of friendUids) {
+                        const friendProfileSnap = await getDoc(doc(db, 'profiles', friendUid));
+                        if (friendProfileSnap.exists()) {
+                            renderFriendItem(friendProfileSnap.data());
+                        }
                     }
+                } else {
+                    friendsContainer.appendChild(emptyState);
+                    emptyState.classList.remove('hidden');
                 }
             });
         }
@@ -239,13 +253,8 @@
         function renderFriendItem(profile, isMe = false) {
              const friendElement = document.createElement('div');
              friendElement.className = 'flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-100 new-item';
-             friendElement.innerHTML = `
-                <img src="${profile.photoURL}" class="w-8 h-8 rounded-full mr-3">
-                <span class="font-medium">${profile.displayName}</span>
-             `;
-             friendElement.addEventListener('click', () => {
-                 loadStory(profile.uid, isMe ? "My Story" : `${profile.displayName}'s Story`);
-             });
+             friendElement.innerHTML = `<img src="${profile.photoURL}" class="w-8 h-8 rounded-full mr-3"><span class="font-medium">${profile.displayName}</span>`;
+             friendElement.addEventListener('click', () => loadStory(profile.uid, isMe ? "My Story" : `${profile.displayName}'s Story`));
              friendsList.appendChild(friendElement);
         }
 
@@ -260,7 +269,7 @@
             e.preventDefault();
             const message = messageInput.value.trim();
             if (message && currentUser) {
-                const button = e.target.querySelector('button');
+                const button = e.target.querySelector('#submit-button');
                 button.disabled = true;
                 button.textContent = 'Saving...';
                 await addDoc(collection(db, `users/${currentUser.uid}/receipts`), {
@@ -281,16 +290,13 @@
             
             loadingEl.style.display = 'block';
             emptyEl.classList.add('hidden');
-            targetList.innerHTML = '';
-            targetList.appendChild(loadingEl);
+            targetList.innerHTML = `<div id="story-loading-state" class="text-center py-10 text-gray-500">Loading...</div>`;
 
             return onSnapshot(q, (querySnapshot) => {
-                loadingEl.style.display = 'none';
                 targetList.innerHTML = '';
-                
                 if (querySnapshot.empty) {
-                    emptyEl.classList.remove('hidden');
                     targetList.appendChild(emptyEl);
+                    emptyState.classList.remove('hidden');
                 } else {
                     querySnapshot.forEach((doc) => {
                         const receipt = doc.data();
@@ -302,7 +308,7 @@
                 }
             }, (error) => {
                 console.error("Error fetching receipts:", error);
-                loadingEl.textContent = "Error loading story.";
+                targetList.innerHTML = `<div class="text-center py-10 text-red-500">Error loading story.</div>`;
             });
         }
     </script>
