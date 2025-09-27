@@ -12,13 +12,18 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .new-receipt { animation: fadeIn 0.5s ease-out; }
+        .new-item { animation: fadeIn 0.5s ease-out; }
         .hidden { display: none; }
+        /* Custom scrollbar for a cleaner look */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="h-full antialiased text-gray-800">
 
-    <!-- NEW: Login Screen -->
+    <!-- Login Screen -->
     <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen p-4">
         <h1 class="text-4xl font-bold tracking-tight text-gray-900">Life Receipts</h1>
         <p class="mt-2 text-lg text-gray-600">Your personal story, one moment at a time.</p>
@@ -28,11 +33,10 @@
         </button>
     </div>
 
-    <!-- NEW: Main Application Content (hidden by default) -->
-    <div id="app-content" class="w-full max-w-7xl mx-auto hidden">
+    <!-- Main Application Content -->
+    <div id="app-content" class="w-full max-w-7xl mx-auto p-4 hidden">
         <header class="flex items-center justify-between mb-8">
             <h1 class="text-2xl font-bold text-gray-900">Life Receipts</h1>
-            <!-- NEW: User Profile Display -->
             <div id="user-profile" class="flex items-center space-x-4">
                 <img id="user-photo" class="w-10 h-10 rounded-full" src="" alt="User photo">
                 <span id="user-name" class="font-semibold text-gray-700"></span>
@@ -46,38 +50,30 @@
                 <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
                     <h2 class="text-xl font-semibold mb-4">Add a New Receipt</h2>
                     <form id="receipt-form">
-                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="What's on your mind?" required></textarea>
+                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="A new entry in your story..." required></textarea>
                         <button type="submit" id="submit-button" class="w-full mt-4 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-transform transform hover:scale-105">Save Receipt</button>
                     </form>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                    <h3 class="text-xl font-semibold text-gray-700">Your User ID</h3>
-                    <p class="text-sm text-gray-500 mt-1">Share this with a friend so they can view your story.</p>
-                    <div class="mt-3 flex items-center bg-gray-100 rounded-lg p-2">
-                        <input type="text" id="user-id-display" readonly class="flex-grow bg-transparent text-gray-600 font-mono text-sm border-0 focus:ring-0">
-                        <button id="copy-button" class="ml-2 px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-300">Copy</button>
-                    </div>
+            </div>
+
+            <!-- Center Column: Story View (Dynamic) -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                <h2 id="story-viewer-title" class="text-xl font-semibold mb-4">My Story</h2>
+                <div id="story-viewer-list" class="space-y-4 h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                    <div id="story-loading-state" class="text-center py-10 text-gray-500">Loading...</div>
+                    <div id="story-empty-state" class="text-center py-10 text-gray-500 hidden">This story is waiting for its first chapter.</div>
                 </div>
             </div>
 
-            <!-- Center Column: My Story -->
+            <!-- Right Column: Friends List -->
             <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 class="text-xl font-semibold mb-4">My Story</h2>
-                <div id="my-receipts-list" class="space-y-4 h-[60vh] overflow-y-auto pr-2">
-                    <div id="my-loading-state" class="text-center py-10 text-gray-500">Loading...</div>
-                    <div id="my-empty-state" class="text-center py-10 text-gray-500 hidden">Your story starts here.</div>
-                </div>
-            </div>
-
-            <!-- Right Column: Friend's Story -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 class="text-xl font-semibold mb-4">Friend's Story</h2>
-                <div class="flex space-x-2">
-                    <input type="text" id="friend-id-input" placeholder="Paste friend's User ID" class="w-full p-2 border border-gray-300 rounded-lg">
-                    <button id="load-friend-button" class="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Load</button>
-                </div>
-                <div id="friend-receipts-list" class="mt-4 space-y-4 h-[52vh] overflow-y-auto pr-2">
-                     <div class="text-center py-10 text-gray-500">Enter a friend's ID to see their story.</div>
+                <h2 class="text-xl font-semibold mb-4">Friends</h2>
+                <form id="add-friend-form" class="flex space-x-2 mb-4">
+                    <input type="email" id="friend-email-input" placeholder="Add friend by email" class="w-full p-2 border border-gray-300 rounded-lg" required>
+                    <button type="submit" class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900">Add</button>
+                </form>
+                <div id="friends-list" class="space-y-2 h-[52vh] overflow-y-auto pr-2 custom-scrollbar">
+                     <div id="friends-empty-state" class="text-center py-10 text-gray-400">Add a friend to see their story.</div>
                 </div>
             </div>
         </main>
@@ -95,9 +91,10 @@
             measurementId: "G-EFQ932E1QB"
         };
 
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -113,156 +110,201 @@
         
         const form = document.getElementById('receipt-form');
         const messageInput = document.getElementById('message-input');
-        const submitButton = document.getElementById('submit-button');
         
-        const myReceiptsList = document.getElementById('my-receipts-list');
-        const myLoadingState = document.getElementById('my-loading-state');
-        const myEmptyState = document.getElementById('my-empty-state');
+        const storyViewerTitle = document.getElementById('story-viewer-title');
+        const storyViewerList = document.getElementById('story-viewer-list');
+        const storyLoadingState = document.getElementById('story-loading-state');
+        const storyEmptyState = document.getElementById('story-empty-state');
         
-        const userIdDisplay = document.getElementById('user-id-display');
-        const copyButton = document.getElementById('copy-button');
+        const addFriendForm = document.getElementById('add-friend-form');
+        const friendEmailInput = document.getElementById('friend-email-input');
+        const friendsList = document.getElementById('friends-list');
+        const friendsEmptyState = document.getElementById('friends-empty-state');
+        
+        let currentUser = null;
+        let unsubscribeStoryViewer = null;
 
-        const friendIdInput = document.getElementById('friend-id-input');
-        const loadFriendButton = document.getElementById('load-friend-button');
-        const friendReceiptsList = document.getElementById('friend-receipts-list');
-        
-        let currentUserId = null;
-        let unsubscribeMyReceipts = null; // To stop listening to old user's data on logout
-
-        // --- AUTHENTICATION LOGIC ---
+        // --- AUTHENTICATION & PROFILE MANAGEMENT ---
         const provider = new GoogleAuthProvider();
-
-        signInButton.addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(error => console.error("Sign in error", error));
-        });
-
-        signOutButton.addEventListener('click', () => {
-            signOut(auth).catch(error => console.error("Sign out error", error));
-        });
+        signInButton.addEventListener('click', () => signInWithPopup(auth, provider));
+        signOutButton.addEventListener('click', () => signOut(auth));
 
         onAuthStateChanged(auth, user => {
-            if (user) { // User is signed in
-                currentUserId = user.uid;
-
-                // Update UI
-                loginScreen.classList.add('hidden');
-                appContent.classList.remove('hidden');
-                
-                userName.textContent = user.displayName;
-                userPhoto.src = user.photoURL;
-                userIdDisplay.value = user.uid;
-
-                // Fetch user's own receipts
-                fetchAndDisplayReceipts(user.uid, myReceiptsList, myLoadingState, myEmptyState);
-            } else { // User is signed out
-                currentUserId = null;
-
-                // Update UI
-                loginScreen.classList.remove('hidden');
-                appContent.classList.add('hidden');
-
-                // Stop listening to previous user's data to prevent errors
-                if (unsubscribeMyReceipts) {
-                    unsubscribeMyReceipts();
-                }
+            if (user) {
+                currentUser = user;
+                setupUIForLoggedInUser(user);
+                createUserProfile(user);
+                loadStory(user.uid, "My Story");
+                listenForFriends(user.uid);
+            } else {
+                currentUser = null;
+                setupUIForLoggedOutUser();
             }
         });
 
-        // --- FIRESTORE LOGIC ---
-        async function saveReceipt(message) {
-            if (!currentUserId) return;
+        function setupUIForLoggedInUser(user) {
+            loginScreen.classList.add('hidden');
+            appContent.classList.remove('hidden');
+            userName.textContent = user.displayName;
+            userPhoto.src = user.photoURL;
+        }
+
+        function setupUIForLoggedOutUser() {
+            loginScreen.classList.remove('hidden');
+            appContent.classList.add('hidden');
+            if (unsubscribeStoryViewer) unsubscribeStoryViewer();
+        }
+
+        async function createUserProfile(user) {
+            const profileRef = doc(db, 'profiles', user.uid);
+            await setDoc(profileRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            }, { merge: true });
+        }
+
+        // --- FRIENDS LOGIC ---
+        addFriendForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = friendEmailInput.value.trim().toLowerCase();
+            if (email === currentUser.email) {
+                alert("You can't add yourself as a friend.");
+                return;
+            }
+            if (email) {
+                await addFriendByEmail(email);
+                addFriendForm.reset();
+            }
+        });
+
+        async function addFriendByEmail(email) {
+            if (!currentUser) return;
             try {
-                await addDoc(collection(db, `users/${currentUserId}/receipts`), {
+                const q = query(collection(db, "profiles"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    alert("User not found. Make sure your friend has logged in at least once.");
+                    return;
+                }
+
+                const friendProfile = querySnapshot.docs[0].data();
+                const friendUid = friendProfile.uid;
+
+                const myProfileRef = doc(db, 'profiles', currentUser.uid);
+                await updateDoc(myProfileRef, {
+                    friends: arrayUnion(friendUid)
+                });
+                alert(`Added ${friendProfile.displayName} as a friend!`);
+            } catch (error) {
+                console.error("Error adding friend:", error);
+                alert("Could not add friend.");
+            }
+        }
+
+        function listenForFriends(uid) {
+            const myProfileRef = doc(db, 'profiles', uid);
+            onSnapshot(myProfileRef, async (docSnap) => {
+                if (!docSnap.exists() || !docSnap.data().friends) {
+                    friendsEmptyState.classList.remove('hidden');
+                    friendsList.innerHTML = '';
+                    friendsList.appendChild(friendsEmptyState);
+                    return;
+                }
+
+                const friendUids = docSnap.data().friends;
+                friendsList.innerHTML = ''; // Clear list
+
+                if (friendUids.length === 0) {
+                     friendsEmptyState.classList.remove('hidden');
+                     friendsList.appendChild(friendsEmptyState);
+                     return;
+                }
+                
+                // Add a button to view my own story
+                renderFriendItem({ uid: currentUser.uid, displayName: "My Story", photoURL: currentUser.photoURL }, true);
+
+                // Fetch and render friend profiles
+                for (const friendUid of friendUids) {
+                    const friendProfileSnap = await getDoc(doc(db, 'profiles', friendUid));
+                    if (friendProfileSnap.exists()) {
+                        renderFriendItem(friendProfileSnap.data());
+                    }
+                }
+            });
+        }
+        
+        function renderFriendItem(profile, isMe = false) {
+             const friendElement = document.createElement('div');
+             friendElement.className = 'flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-100 new-item';
+             friendElement.innerHTML = `
+                <img src="${profile.photoURL}" class="w-8 h-8 rounded-full mr-3">
+                <span class="font-medium">${profile.displayName}</span>
+             `;
+             friendElement.addEventListener('click', () => {
+                 loadStory(profile.uid, isMe ? "My Story" : `${profile.displayName}'s Story`);
+             });
+             friendsList.appendChild(friendElement);
+        }
+
+        // --- STORY/RECEIPT LOGIC ---
+        function loadStory(uid, title) {
+            storyViewerTitle.textContent = title;
+            if (unsubscribeStoryViewer) unsubscribeStoryViewer();
+            unsubscribeStoryViewer = createSnapshotListener(uid, storyViewerList, storyLoadingState, storyEmptyState);
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (message && currentUser) {
+                const button = e.target.querySelector('button');
+                button.disabled = true;
+                button.textContent = 'Saving...';
+                await addDoc(collection(db, `users/${currentUser.uid}/receipts`), {
                     message: message,
                     timestamp: serverTimestamp(),
                     dateString: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
                 });
-            } catch (error) {
-                console.error("Error adding document: ", error);
+                form.reset();
+                button.disabled = false;
+                button.textContent = 'Save Receipt';
             }
-        }
+        });
 
-        function fetchAndDisplayReceipts(uid, targetList, loadingEl, emptyEl) {
+        function createSnapshotListener(uid, targetList, loadingEl, emptyEl) {
             if (!uid) return;
-            
             const receiptsRef = collection(db, `users/${uid}/receipts`);
             const q = query(receiptsRef, orderBy("timestamp", "desc"));
-
-            // If we are fetching our own receipts, store the listener to unsubscribe on logout
-            if (uid === currentUserId) {
-                if (unsubscribeMyReceipts) unsubscribeMyReceipts(); // Unsubscribe from any previous listener
-                unsubscribeMyReceipts = createSnapshotListener(q, targetList, loadingEl, emptyEl);
-            } else {
-                // For friends, it's a one-time fetch for now, but onSnapshot is fine
-                createSnapshotListener(q, targetList, loadingEl, emptyEl);
-            }
-        }
-        
-        // Helper function to create the listener
-        function createSnapshotListener(q, targetList, loadingEl, emptyEl) {
+            
             loadingEl.style.display = 'block';
             emptyEl.classList.add('hidden');
+            targetList.innerHTML = '';
+            targetList.appendChild(loadingEl);
 
             return onSnapshot(q, (querySnapshot) => {
                 loadingEl.style.display = 'none';
-                targetList.innerHTML = ''; // Clear previous list
+                targetList.innerHTML = '';
                 
                 if (querySnapshot.empty) {
                     emptyEl.classList.remove('hidden');
+                    targetList.appendChild(emptyEl);
                 } else {
-                    emptyEl.classList.add('hidden');
                     querySnapshot.forEach((doc) => {
                         const receipt = doc.data();
-                        const receiptElement = document.createElement('div');
-                        receiptElement.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'new-receipt');
-                        receiptElement.innerHTML = `<p class="text-gray-800">${receipt.message}</p><p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || ''}</p>`;
-                        targetList.appendChild(receiptElement);
+                        const el = document.createElement('div');
+                        el.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'new-item');
+                        el.innerHTML = `<p class="text-gray-800">${receipt.message}</p><p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || ''}</p>`;
+                        targetList.appendChild(el);
                     });
                 }
             }, (error) => {
                 console.error("Error fetching receipts:", error);
-                loadingEl.innerText = "Error loading.";
+                loadingEl.textContent = "Error loading story.";
             });
         }
-
-        // --- EVENT LISTENERS ---
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (message) {
-                submitButton.textContent = 'Saving...';
-                await saveReceipt(message);
-                form.reset();
-                submitButton.textContent = 'Save Receipt';
-            }
-        });
-
-        copyButton.addEventListener('click', () => {
-            userIdDisplay.select();
-            document.execCommand('copy');
-            copyButton.textContent = 'Copied!';
-            setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
-        });
-        
-        loadFriendButton.addEventListener('click', () => {
-            const friendId = friendIdInput.value.trim();
-            if (friendId) {
-                const friendLoadingEl = document.createElement('div');
-                friendLoadingEl.className = 'text-center py-10 text-gray-500';
-                friendLoadingEl.textContent = 'Loading friend\'s story...';
-
-                const friendEmptyEl = document.createElement('div');
-                friendEmptyEl.className = 'text-center py-10 text-gray-500 hidden';
-                friendEmptyEl.textContent = 'This person hasn\'t written anything yet.';
-                
-                friendReceiptsList.innerHTML = ''; // Clear previous friend's list
-                friendReceiptsList.appendChild(friendLoadingEl);
-                friendReceiptsList.appendChild(friendEmptyEl);
-                
-                fetchAndDisplayReceipts(friendId, friendReceiptsList, friendLoadingEl, friendEmptyEl);
-            }
-        });
-
     </script>
 </body>
 </html>
