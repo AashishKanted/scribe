@@ -6,65 +6,53 @@ const {GoogleGenerativeAI} = require("@google/generative-ai");
 admin.initializeApp();
 const db = admin.firestore();
 
-// Initialize Google AI Client
+// --- AI Client Initialization ---
 const MODEL_NAME = "gemini-2.5-flash-preview-05-20";
 const API_KEY = functions.config().gemini.key;
 
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({model: MODEL_NAME});
+const model = genAI.getGenerativeModel({
+  model: MODEL_NAME,
+});
 
 /**
- * Takes a raw note and uses AI to enhance it, using both long-term memory
- * and recent receipts for context.
+ * AI Scribe: Takes a raw note and enhances it.
  */
 exports.getEnhancedReceipt = functions.https.onCall(async (data, context) => {
-  // Authentication check
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-        "unauthenticated",
-        "You must be logged in to use the AI Scribe.",
-    );
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
   }
-
-  const {text: rawText} = data;
   const {uid} = context.auth.token;
-
+  const {text: rawText} = data;
   if (!rawText) {
-    throw new functions.https.HttpsError(
-        "invalid-argument",
-        "The function must be called with 'text' containing the message.",
-    );
+    throw new functions.https.HttpsError("invalid-argument", "Text required.");
   }
 
   try {
-    // 1. Fetch long-term memory
     const memoryRef = db.doc(`users/${uid}/memory/summary`);
     const memoryDoc = await memoryRef.get();
-    const memorySummary = memoryDoc.exists() ?
+    const memorySummary = memoryDoc.exists ?
       memoryDoc.data().summary :
       "No long-term memory yet.";
 
-    // 2. Fetch recent receipts for short-term context
     const receiptsRef = db
         .collection(`users/${uid}/receipts`)
         .orderBy("timestamp", "desc")
         .limit(3);
     const snapshot = await receiptsRef.get();
     const recentReceipts = [];
-    snapshot.forEach((doc) => {
-      recentReceipts.push(doc.data());
-    });
+    snapshot.forEach((doc) => recentReceipts.push(doc.data()));
     const contextHistory = recentReceipts
         .reverse()
         .map((r) => `- ${r.message}`)
         .join("\n");
 
-    // 3. Construct the detailed prompt
-    const prompt = `You are a supportive biographer. Expand the following raw
-note into a reflective journal entry. The final output must be a single
-paragraph under 200 characters.
-
-Use the following long-term memory and recent entries for deep context.
+    const prompt = `You are a personal scribe with a witty, slightly playful,
+and very human tone. Your goal is to rephrase the user's raw note into a
+beautifully written, insightful journal entry. The final output must be a
+single paragraph under 200 characters. Use the following long-term memory
+and recent entries for deep context, but don't feel obligated to reference
+them directly. Focus on making the new entry shine.
 
 LONG-TERM MEMORY:
 ${memorySummary}
@@ -74,24 +62,17 @@ ${contextHistory || "No recent entries."}
 
 NEW NOTE: "${rawText}"`;
 
-
-    // 4. Call the Gemini API and return the result
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const enhancedText = response.text();
-    return {text: enhancedText};
+    return {text: response.text()};
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    throw new functions.https.HttpsError(
-        "internal",
-        "Failed to get a response from the AI Scribe.",
-    );
+    functions.logger.error("CRITICAL: Gemini API Error in Scribe:", error);
+    throw new functions.https.HttpsError("internal", "AI Scribe failed.");
   }
 });
 
 /**
- * Automatically updates the user's long-term memory file
- * after every 5 new receipts are created.
+ * Memory Curator: Automatically updates the user's long-term memory.
  */
 exports.updateMemoryOnNewReceipt = functions.firestore
     .document("users/{userId}/receipts/{receiptId}")
@@ -99,20 +80,16 @@ exports.updateMemoryOnNewReceipt = functions.firestore
       const {userId} = context.params;
       const userRef = db.doc(`users/${userId}`);
 
-      // Use a transaction to safely increment a counter
       return db.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
-        const newCount = (userDoc.data().receiptCount || 0) + 1;
-        transaction.update(userRef, {receiptCount: newCount});
+        const currentCount = userDoc.exists ?
+          userDoc.data().receiptCount || 0 :
+          0;
+        const newCount = currentCount + 1;
+        transaction.set(userRef, {receiptCount: newCount}, {merge: true});
 
-        // Only run the memory update every 5 receipts
-        if (newCount % 5 !== 0) {
-          return null; // Exit early
-        }
+        if (newCount % 5 !== 0) return null;
 
-        console.log(`Updating memory for user ${userId} at ${newCount} receipts.`);
-
-        // 1. Get the last 15 receipts
         const receiptsQuery = db
             .collection(`users/${userId}/receipts`)
             .orderBy("timestamp", "desc")
@@ -123,17 +100,17 @@ exports.updateMemoryOnNewReceipt = functions.firestore
             .reverse()
             .join("\n");
 
-        // 2. Get the current memory summary
         const memoryRef = db.doc(`users/${userId}/memory/summary`);
         const memoryDoc = await memoryRef.get();
-        const currentMemory = memoryDoc.exists() ? memoryDoc.data().summary : "";
+        const currentMemory = memoryDoc.exists ? memoryDoc.data().summary : "";
 
-        // 3. Construct the memory update prompt
-        const prompt = `You are a memory curator. Here is the user's
-current memory summary and their newest journal entries.
-Integrate the new information into the existing summary, keeping it concise
-(under 500 characters) and focused on key facts, themes, and goals.
-Output only the updated summary, not conversational text.
+        const prompt = `You are an intelligent memory archivist. Your task is to
+update the user's long-term memory summary. Here is the current summary and a
+list of their recent journal entries. Synthesize the new entries into the
+existing summary, creating a new, cohesive narrative. Intelligently integrate
+new facts, remove outdated or trivial details, and identify evolving themes.
+The final summary should be a concise, high-level overview of the user's
+current life, under 2000 characters. Output only the updated summary.
 
 CURRENT SUMMARY:
 ${currentMemory || "No summary yet."}
@@ -141,15 +118,47 @@ ${currentMemory || "No summary yet."}
 NEW ENTRIES:
 ${recentHistory}`;
 
-        // 4. Call Gemini and save the new summary
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const newSummary = response.text();
-
         return transaction.set(memoryRef, {
-          summary: newSummary,
+          summary: response.text(),
           lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
         });
       });
     });
 
+/**
+ * Securely edits a user's receipt.
+ */
+exports.editReceipt = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const {uid} = context.auth.token;
+  const {receiptId, newText} = data;
+  if (!receiptId || !newText) {
+    throw new functions.https.HttpsError("invalid-argument", "ID/Text needed.");
+  }
+
+  const receiptRef = db.doc(`users/${uid}/receipts/${receiptId}`);
+  await receiptRef.update({message: newText});
+  return {status: "success", message: "Receipt updated."};
+});
+
+/**
+ * Securely deletes a user's receipt.
+ */
+exports.deleteReceipt = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const {uid} = context.auth.token;
+  const {receiptId} = data;
+  if (!receiptId) {
+    throw new functions.https.HttpsError("invalid-argument", "ID needed.");
+  }
+
+  const receiptRef = db.doc(`users/${uid}/receipts/${receiptId}`);
+  await receiptRef.delete();
+  return {status: "success", message: "Receipt deleted."};
+});

@@ -1,163 +1,258 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-50">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scribe</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scribe | Your Life Story</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .receipt-card { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-active { border-bottom-color: #111827; color: #111827; }
-        .tab-inactive { border-bottom-color: transparent; color: #6b7280; }
+        :root {
+            --bg-primary: #F9FAFB; /* Gray 50 */
+            --bg-secondary: #FFFFFF;
+            --text-primary: #1F2937; /* Gray 800 */
+            --text-secondary: #6B7280; /* Gray 500 */
+            --accent: #38BDF8; /* Sky 400 */
+            --border-color: #E5E7EB; /* Gray 200 */
+        }
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        .font-mono { font-family: 'Source Code Pro', monospace; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #F3F4F6; } /* Gray 100 */
+        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; } /* Gray 300 */
+        ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; } /* Gray 400 */
+
+        /* Tab styling */
+        .tab-active { background-color: var(--accent); color: white; }
+        .tab-inactive { background-color: transparent; color: var(--text-secondary); }
+        
+        /* Receipt Card Animation */
+        .receipt-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+        .receipt-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .receipt-card:hover .receipt-actions { opacity: 1; }
+
+        /* Modal animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.95); } to { transform: scale(1); } }
+        .modal-bg { animation: fadeIn 0.2s ease-out forwards; }
+        .modal-content { animation: fadeIn 0.2s ease-out 0.1s forwards, scaleIn 0.2s ease-out 0.1s forwards; opacity: 0; }
+        
+        /* Magic Button Shine Effect */
+        .btn-magic {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-magic::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            border-radius: 50%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+        .btn-magic:hover::after {
+            animation: ripple 1s ease-out;
+        }
+        @keyframes ripple {
+            0% { transform: scale(0, 0) translate(-50%, -50%); opacity: 1; }
+            100% { transform: scale(20, 20) translate(-50%, -50%); opacity: 0; }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
-
-    <!-- Main Application Container -->
-    <div id="app" class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+<body class="antialiased">
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        
         <!-- Login View -->
-        <div id="login-view" class="min-h-screen flex items-center justify-center hidden">
-            <div class="text-center p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
-                <h1 class="text-4xl font-bold text-gray-900 mb-2">Scribe</h1>
-                <p class="text-gray-600 mb-6">Your personal AI biographer.</p>
-                <button id="google-signin-btn" class="bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-900 transition-all duration-300 flex items-center justify-center mx-auto shadow-md">
-                    <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.574l6.19 5.238C42.021 35.826 44 30.137 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+        <div id="login-view" class="hidden min-h-screen flex items-center justify-center">
+            <div class="text-center p-8">
+                <h1 class="text-6xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500">Scribe</h1>
+                <p class="mt-4 text-lg text-gray-600">Your life story, beautifully penned.</p>
+                <button id="login-button" class="mt-10 inline-flex items-center justify-center px-8 py-3 font-semibold rounded-full text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-transform hover:scale-105">
                     Sign in with Google
                 </button>
             </div>
         </div>
 
         <!-- Main App View -->
-        <div id="app-view" class="hidden">
-            <!-- Header -->
-            <header class="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Scribe</h1>
-                <div class="flex items-center space-x-4">
-                    <div id="user-profile" class="flex items-center space-x-3">
-                        <img id="user-photo" src="" alt="User photo" class="w-9 h-9 rounded-full">
-                        <span id="user-name" class="font-semibold text-gray-700 hidden sm:block"></span>
-                    </div>
-                    <button id="logout-btn" class="text-gray-500 hover:text-gray-800 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    </button>
+        <div id="main-view" class="hidden">
+            <header class="flex justify-between items-center mb-10">
+                <h1 class="text-3xl font-bold tracking-tighter text-gray-900">Scribe</h1>
+                <div id="user-profile" class="flex items-center space-x-3">
+                    <!-- Profile info will be inserted here -->
                 </div>
             </header>
 
-            <!-- Tab Navigation -->
-            <nav class="mb-8">
-                <div class="border-b border-gray-200">
-                    <div class="-mb-px flex space-x-8" aria-label="Tabs">
-                        <button id="tab-scribe" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-active">Scribe</button>
-                        <button id="tab-friends" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-inactive">Friends</button>
-                        <button id="tab-story" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-inactive">My Story</button>
-                    </div>
-                </div>
-            </nav>
+            <div class="mb-8">
+                <nav class="flex space-x-2 bg-gray-100 p-1.5 rounded-full" aria-label="Tabs">
+                    <button id="tab-scribe" class="flex-1 text-center whitespace-nowrap py-2 px-4 rounded-full font-medium text-sm transition-colors duration-200 tab-active">Scribe</button>
+                    <button id="tab-friends" class="flex-1 text-center whitespace-nowrap py-2 px-4 rounded-full font-medium text-sm transition-colors duration-200 tab-inactive">Friends</button>
+                    <button id="tab-story" class="flex-1 text-center whitespace-nowrap py-2 px-4 rounded-full font-medium text-sm transition-colors duration-200 tab-inactive">My Story</button>
+                </nav>
+            </div>
 
-            <!-- Main Content: Views will be rendered here -->
-            <main id="main-content">
-                <!-- Content will be dynamically inserted by JavaScript -->
+            <main id="tab-content">
+                <!-- Content for tabs will be inserted here -->
             </main>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50">
+        <div class="modal-bg fixed inset-0 bg-black bg-opacity-50"></div>
+        <div class="modal-content relative flex items-center justify-center min-h-screen">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 w-full max-w-sm">
+                <h3 class="text-lg font-medium text-gray-900">Delete Receipt</h3>
+                <p class="mt-2 text-sm text-gray-500">Are you sure you want to delete this memory? This action cannot be undone.</p>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancel-delete-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300">Cancel</button>
+                    <button id="confirm-delete-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">Delete</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <div id="edit-modal" class="hidden fixed inset-0 z-50">
+        <div class="modal-bg fixed inset-0 bg-black bg-opacity-50"></div>
+        <div class="modal-content relative flex items-center justify-center min-h-screen">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 w-full max-w-lg">
+                <h3 class="text-lg font-medium text-gray-900">Edit Receipt</h3>
+                <textarea id="edit-textarea" rows="5" class="mt-4 w-full p-3 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 font-mono"></textarea>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancel-edit-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300">Cancel</button>
+                    <button id="save-edit-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-sky-500 hover:bg-sky-600">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, getDocs, orderBy, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs, orderBy, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
         import { firebaseConfig } from './firebase-config.js';
 
-        // --- Firebase Initialization ---
+        // --- App Initialization ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const functions = getFunctions(app);
 
-        // --- Global State ---
+        // --- State Management ---
         let currentUser = null;
-        let currentView = 'scribe'; // 'scribe', 'friends', 'story'
-        let unsubscribeReceipts = null;
-        let unsubscribeFriends = null;
+        let currentUnsubscribe = null;
+        let friendsUnsubscribe = null;
+        let receiptToDelete = null;
+        let receiptToEdit = null;
 
         // --- UI Elements ---
         const loginView = document.getElementById('login-view');
-        const appView = document.getElementById('app-view');
-        const mainContent = document.getElementById('main-content');
+        const mainView = document.getElementById('main-view');
+        const loginButton = document.getElementById('login-button');
+        const userProfile = document.getElementById('user-profile');
+        const tabContent = document.getElementById('tab-content');
+        const tabs = {
+            scribe: document.getElementById('tab-scribe'),
+            friends: document.getElementById('tab-friends'),
+            story: document.getElementById('tab-story'),
+        };
 
-        // --- Authentication ---
+        // --- Modals ---
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteButton = document.getElementById('confirm-delete-button');
+        const cancelDeleteButton = document.getElementById('cancel-delete-button');
+        const editModal = document.getElementById('edit-modal');
+        const editTextArea = document.getElementById('edit-textarea');
+        const saveEditButton = document.getElementById('save-edit-button');
+        const cancelEditButton = document.getElementById('cancel-edit-button');
+
+        // --- Auth Handling ---
         onAuthStateChanged(auth, async (user) => {
+            if (currentUnsubscribe) currentUnsubscribe();
+            if (friendsUnsubscribe) friendsUnsubscribe();
+
             if (user) {
                 currentUser = user;
-                await setupUserProfile(user);
-                renderApp();
                 loginView.classList.add('hidden');
-                appView.classList.remove('hidden');
+                mainView.classList.remove('hidden');
+                
+                await ensureUserProfile(user);
+                renderUserProfile(user);
+                setActiveTab('scribe');
+
             } else {
                 currentUser = null;
-                if (unsubscribeReceipts) unsubscribeReceipts();
-                if (unsubscribeFriends) unsubscribeFriends();
                 loginView.classList.remove('hidden');
-                appView.classList.add('hidden');
+                mainView.classList.add('hidden');
             }
         });
 
-        document.getElementById('google-signin-btn').addEventListener('click', () => {
+        loginButton.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
             signInWithPopup(auth, provider).catch(error => console.error("Sign in error", error));
         });
 
-        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-        async function setupUserProfile(user) {
-            document.getElementById('user-photo').src = user.photoURL;
-            document.getElementById('user-name').textContent = user.displayName;
-            
-            const profileRef = doc(db, 'profiles', user.uid);
-            const profileSnap = await getDoc(profileRef);
-            if (!profileSnap.exists()) {
-                await setDoc(profileRef, {
-                    name: user.displayName || user.email, // FIX: Fallback to email if name is missing
+        const ensureUserProfile = async (user) => {
+            const userRef = doc(db, 'profiles', user.uid);
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) {
+                await setDoc(userRef, {
+                    name: user.displayName || 'Anonymous',
                     email: user.email,
                     photoURL: user.photoURL,
-                    friends: []
                 });
+            } else {
+                 if (!userDoc.data().name || userDoc.data().name === 'Anonymous') {
+                    await updateDoc(userRef, { name: user.displayName });
+                 }
             }
-        }
+        };
+
+        const renderUserProfile = (user) => {
+            userProfile.innerHTML = `
+                <span class="text-sm font-medium text-gray-700">${user.displayName}</span>
+                <img class="h-9 w-9 rounded-full border-2 border-gray-200" src="${user.photoURL}" alt="User profile picture">
+                <button id="logout-button" class="ml-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">Logout</button>
+            `;
+            document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
+        };
 
         // --- Tab Navigation ---
-        document.getElementById('tab-scribe').addEventListener('click', () => switchTab('scribe'));
-        document.getElementById('tab-friends').addEventListener('click', () => switchTab('friends'));
-        document.getElementById('tab-story').addEventListener('click', () => switchTab('story'));
+        Object.keys(tabs).forEach(tabId => {
+            tabs[tabId].addEventListener('click', () => setActiveTab(tabId));
+        });
 
-        function switchTab(tabName) {
-            currentView = tabName;
-            updateTabStyles();
-            renderApp();
-        }
+        const setActiveTab = (tabId) => {
+            Object.values(tabs).forEach(tab => tab.classList.replace('tab-active', 'tab-inactive'));
+            tabs[tabId].classList.replace('tab-inactive', 'tab-active');
+            renderTabContent(tabId);
+        };
+        
+        const renderTabContent = (tabId) => {
+            if (currentUnsubscribe) currentUnsubscribe();
+            tabContent.innerHTML = '<div class="text-center py-20 text-gray-400">Loading...</div>';
 
-        function updateTabStyles() {
-            ['scribe', 'friends', 'story'].forEach(tabId => {
-                const tab = document.getElementById(`tab-${tabId}`);
-                if (tabId === currentView) {
-                    tab.classList.replace('tab-inactive', 'tab-active');
-                } else {
-                    tab.classList.replace('tab-active', 'tab-inactive');
-                }
-            });
-        }
-
-        // --- Main Render Function ---
-        function renderApp() {
-            mainContent.innerHTML = ''; // Clear content
-            if (!currentUser) return;
-
-            switch (currentView) {
+            switch(tabId) {
                 case 'scribe':
                     renderScribeView();
                     break;
@@ -168,248 +263,272 @@
                     renderStoryView();
                     break;
             }
-        }
+        };
         
-        // --- View Renderers ---
-        function renderScribeView() {
-            mainContent.innerHTML = `
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-                        <textarea id="receipt-input" class="w-full p-4 text-lg border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none" rows="4" placeholder="What's on your mind?"></textarea>
-                        <div class="flex justify-end items-center mt-4">
-                             <button id="ai-scribe-btn" class="p-2 text-gray-500 hover:text-gray-900 rounded-full transition" title="Pen My Receipt">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                            </button>
-                            <button id="save-receipt-btn" class="bg-gray-800 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-900 transition ml-2">Save Receipt</button>
-                        </div>
+        // --- Scribe View ---
+        const renderScribeView = () => {
+            tabContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div id="scribe-form-container">
+                        <form id="scribe-form" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <textarea id="scribe-textarea" name="message" maxlength="200" placeholder="A new memory..." class="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-inner focus:ring-sky-500 focus:border-sky-500 resize-none font-mono text-gray-700" rows="5" required></textarea>
+                            <div class="flex justify-between items-center mt-4">
+                                <span id="char-counter" class="text-sm text-gray-400">200 characters left</span>
+                                <div class="flex items-center space-x-3">
+                                     <button id="ai-scribe-button" type="button" title="Pen My Receipt" class="btn-magic p-2.5 rounded-full bg-gray-200 hover:bg-gray-300 text-sky-500 transition">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 2.293a1 1 0 011.414 0l-1.06 1.06a1 1 0 010 1.414l-2.122 2.121a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 010-1.414l2.12-2.121a1 1 0 011.414 0zM12.586 12.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0l-2.121 2.121a1 1 0 010 1.414l1.06 1.06zM3.414 16.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0L2.293 12.293a1 1 0 010-1.414l1.06-1.06a1 1 0 011.414 0l2.121 2.121a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0L3.414 13.707a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0l1.06-1.06z"/></svg>
+                                     </button>
+                                     <button type="submit" class="px-6 py-2.5 bg-sky-500 text-white font-semibold rounded-full hover:bg-sky-600 transition shadow-lg hover:scale-105">Save</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                    <div id="receipts-feed" class="space-y-6"></div>
+                    <div id="story-feed-container" class="space-y-4">
+                        <h2 class="text-2xl font-bold tracking-tight mb-4">My Story</h2>
+                        <div id="story-feed" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
+                    </div>
                 </div>
             `;
             attachScribeListeners();
-            listenForMyReceipts();
-        }
-        
-        function renderFriendsView() {
-            mainContent.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="md:col-span-1">
-                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                            <h2 class="text-xl font-bold mb-4">Add Friend</h2>
-                            <div id="add-friend-status"></div>
-                            <input type="email" id="friend-email-input" placeholder="Friend's email" class="w-full p-3 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent mb-3">
-                            <button id="add-friend-btn" class="w-full bg-gray-800 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Add</button>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mt-6">
-                            <h2 class="text-xl font-bold mb-4">My Friends</h2>
-                            <div id="friends-list" class="space-y-3"></div>
-                        </div>
-                    </div>
-                    <div id="friend-story-container" class="md:col-span-2">
-                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[300px]">
-                            <h2 id="friend-story-title" class="text-2xl font-bold mb-6 text-gray-800">Select a friend to view their story</h2>
-                            <div id="friend-receipts-feed" class="space-y-6"></div>
-                         </div>
-                    </div>
-                </div>
-            `;
-            attachFriendsListeners();
-            listenForFriends();
-        }
+            loadStory(currentUser.uid, 'story-feed', true);
+        };
 
-        function renderStoryView() {
-            mainContent.innerHTML = `
-                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center">
-                    <h2 class="text-3xl font-bold mb-4">My Story</h2>
-                    <p class="text-gray-600 max-w-2xl mx-auto mb-8">This is where your AI Biographer will turn your receipts into scenes, chapters, and volumes of your life story. This feature is coming soon!</p>
-                     <div class="flex justify-center items-center space-x-4">
-                        <button class="bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition cursor-not-allowed" disabled>Write this Week's Scene</button>
-                        <button class="bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition cursor-not-allowed" disabled>Write this Month's Chapter</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // --- Logic & Listeners ---
+        const attachScribeListeners = () => {
+            const form = document.getElementById('scribe-form');
+            const textarea = document.getElementById('scribe-textarea');
+            const charCounter = document.getElementById('char-counter');
+            const aiButton = document.getElementById('ai-scribe-button');
 
-        // SCRIBE LOGIC
-        function attachScribeListeners() {
-            const saveBtn = document.getElementById('save-receipt-btn');
-            const aiBtn = document.getElementById('ai-scribe-btn');
-            const input = document.getElementById('receipt-input');
-
-            saveBtn.addEventListener('click', async () => {
-                const message = input.value.trim();
-                if (!message) return;
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Saving...';
-                await addDoc(collection(db, `users/${currentUser.uid}/receipts`), {
-                    message,
-                    authorId: currentUser.uid,
-                    authorName: currentUser.displayName,
-                    authorPhoto: currentUser.photoURL,
-                    timestamp: serverTimestamp()
-                });
-                input.value = '';
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Save Receipt';
+            textarea.addEventListener('input', () => {
+                const remaining = 200 - textarea.value.length;
+                charCounter.textContent = `${remaining} characters left`;
             });
-            
-            aiBtn.addEventListener('click', async () => {
-                const rawText = input.value.trim();
-                if (!rawText) return;
-                aiBtn.disabled = true;
-                const originalIcon = aiBtn.innerHTML;
-                aiBtn.innerHTML = `<svg class="w-6 h-6 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            aiButton.addEventListener('click', async () => {
+                const rawText = textarea.value;
+                if (!rawText.trim()) return;
                 
+                aiButton.disabled = true;
+                aiButton.innerHTML = `<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
                 try {
                     const getEnhancedReceipt = httpsCallable(functions, 'getEnhancedReceipt');
                     const result = await getEnhancedReceipt({ text: rawText });
-                    input.value = result.data.text;
+                    textarea.value = result.data.text;
+                    textarea.dispatchEvent(new Event('input'));
                 } catch (error) {
                     console.error("AI Scribe Error:", error);
                     alert("The AI Scribe couldn't respond. Please try again.");
                 } finally {
-                    aiBtn.disabled = false;
-                    aiBtn.innerHTML = originalIcon;
+                    aiButton.disabled = false;
+                    aiButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 2.293a1 1 0 011.414 0l-1.06 1.06a1 1 0 010 1.414l-2.122 2.121a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 010-1.414l2.12-2.121a1 1 0 011.414 0zM12.586 12.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0l-2.121 2.121a1 1 0 010 1.414l1.06 1.06zM3.414 16.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0L2.293 12.293a1 1 0 010-1.414l1.06-1.06a1 1 0 011.414 0l2.121 2.121a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0L3.414 13.707a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0l1.06-1.06z"/></svg>`;
                 }
             });
-        }
-        
-        function listenForMyReceipts() {
-            if (unsubscribeReceipts) unsubscribeReceipts();
-            const receiptsRef = collection(db, `users/${currentUser.uid}/receipts`);
-            const q = query(receiptsRef, orderBy('timestamp', 'desc'));
-            unsubscribeReceipts = onSnapshot(q, (snapshot) => {
-                const feed = document.getElementById('receipts-feed');
-                if (!feed) return;
-                feed.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const card = createReceiptCard(data);
-                    feed.appendChild(card);
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const message = textarea.value;
+                if (!message.trim()) return;
+
+                const newReceiptRef = doc(collection(db, `users/${currentUser.uid}/receipts`));
+                await setDoc(newReceiptRef, {
+                    message,
+                    timestamp: serverTimestamp()
                 });
+
+                textarea.value = '';
+                textarea.dispatchEvent(new Event('input'));
             });
-        }
+        };
 
-        function createReceiptCard(data) {
-            const card = document.createElement('div');
-            card.className = 'bg-white p-5 rounded-xl shadow-md border border-gray-100 receipt-card';
-            const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Just now';
-            card.innerHTML = `
-                <p class="text-gray-800 text-lg">${data.message}</p>
-                <div class="flex items-center justify-end text-sm text-gray-400 mt-4">
-                    <span>${date}</span>
-                </div>
-            `;
-            return card;
-        }
+        const loadStory = (uid, elementId, isOwnStory = false) => {
+            const feed = document.getElementById(elementId);
+            if (!feed) return;
+            const q = query(collection(db, `users/${uid}/receipts`), orderBy('timestamp', 'desc'));
 
-        // FRIENDS LOGIC
-        function attachFriendsListeners() {
-            document.getElementById('add-friend-btn').addEventListener('click', handleAddFriend);
-        }
-        
-        function listenForFriends() {
-             if (unsubscribeFriends) unsubscribeFriends();
-             const profileRef = doc(db, 'profiles', currentUser.uid);
-             unsubscribeFriends = onSnapshot(profileRef, (docSnap) => {
-                 if (docSnap.exists()) {
-                     const userData = docSnap.data();
-                     renderFriendsList(userData.friends || []);
-                 }
-             });
-        }
-
-        async function renderFriendsList(friendIds) {
-            const listEl = document.getElementById('friends-list');
-            if (!listEl) return;
-            listEl.innerHTML = '<p class="text-gray-500">Loading friends...</p>';
-            if (friendIds.length === 0) {
-                 listEl.innerHTML = '<p class="text-gray-500">You haven\'t added any friends yet.</p>';
-                 return;
-            }
-
-            const friendPromises = friendIds.map(id => getDoc(doc(db, 'profiles', id)));
-            const friendDocs = await Promise.all(friendPromises);
-            
-            listEl.innerHTML = '';
-            friendDocs.forEach(friendDoc => {
-                if(friendDoc.exists()) {
-                    const friendData = friendDoc.data();
-                    const friendEl = document.createElement('button');
-                    friendEl.className = 'flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition';
-                    friendEl.innerHTML = `
-                        <img src="${friendData.photoURL}" alt="${friendData.name || friendData.email}" class="w-10 h-10 rounded-full">
-                        <span class="font-semibold text-gray-700">${friendData.name || friendData.email}</span>
-                    `; // FIX: Fallback to email if name is missing
-                    friendEl.onclick = () => viewFriendStory(friendDoc.id, friendData.name || friendData.email); // FIX: Pass fallback name
-                    listEl.appendChild(friendEl);
-                }
-            });
-        }
-        
-        async function handleAddFriend() {
-            const emailInput = document.getElementById('friend-email-input');
-            const statusEl = document.getElementById('add-friend-status');
-            const email = emailInput.value.trim().toLowerCase();
-            if (!email) return;
-
-            statusEl.textContent = 'Searching...';
-            statusEl.className = 'text-blue-600 mb-2';
-
-            const profilesRef = collection(db, 'profiles');
-            const q = query(profilesRef, where('email', '==', email));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                statusEl.textContent = 'User not found.';
-                statusEl.className = 'text-red-600 mb-2';
-                return;
-            }
-            
-            const friendProfile = querySnapshot.docs[0];
-            const friendId = friendProfile.id;
-
-            if (friendId === currentUser.uid) {
-                statusEl.textContent = "You can't add yourself!";
-                statusEl.className = 'text-yellow-600 mb-2';
-                return;
-
-            }
-
-            const userProfileRef = doc(db, 'profiles', currentUser.uid);
-            await updateDoc(userProfileRef, {
-                friends: arrayUnion(friendId)
-            });
-            
-            emailInput.value = '';
-            statusEl.textContent = 'Friend added!';
-            statusEl.className = 'text-green-600 mb-2';
-        }
-        
-        let unsubscribeFriendReceipts = null;
-        function viewFriendStory(friendId, friendName) {
-            document.getElementById('friend-story-title').textContent = `${friendName}'s Story`;
-            const feed = document.getElementById('friend-receipts-feed');
-            feed.innerHTML = '<p class="text-gray-500">Loading story...</p>';
-
-            if (unsubscribeFriendReceipts) unsubscribeFriendReceipts();
-            const receiptsRef = collection(db, `users/${friendId}/receipts`);
-            const q = query(receiptsRef, orderBy('timestamp', 'desc'));
-            unsubscribeFriendReceipts = onSnapshot(q, (snapshot) => {
-                feed.innerHTML = '';
-                 if (snapshot.empty) {
-                    feed.innerHTML = '<p class="text-gray-500">This story has no entries yet.</p>';
+            currentUnsubscribe = onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    feed.innerHTML = `<p class="text-center text-gray-400 py-8">No memories penned yet.</p>`;
                     return;
                 }
-                snapshot.forEach(doc => {
+                feed.innerHTML = snapshot.docs.map(doc => {
                     const data = doc.data();
-                    const card = createReceiptCard(data);
-                    feed.appendChild(card);
+                    const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Just now';
+                    return `
+                        <div id="receipt-${doc.id}" class="receipt-card bg-white p-4 rounded-lg border border-gray-200 group relative">
+                            <p class="text-gray-600 font-mono text-sm">${data.message}</p>
+                            <p class="text-xs text-gray-400 mt-3">${date}</p>
+                            ${isOwnStory ? `
+                            <div class="receipt-actions absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button data-id="${doc.id}" class="edit-receipt-btn p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-sky-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>
+                                </button>
+                                <button data-id="${doc.id}" class="delete-receipt-btn p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                if (isOwnStory) attachActionListeners();
+            });
+        };
+        
+        const attachActionListeners = () => {
+             document.querySelectorAll('.delete-receipt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    receiptToDelete = btn.dataset.id;
+                    deleteModal.classList.remove('hidden');
+                });
+            });
+
+            document.querySelectorAll('.edit-receipt-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    receiptToEdit = btn.dataset.id;
+                    const receiptText = document.querySelector(`#receipt-${receiptToEdit} p.font-mono`).textContent;
+                    editTextArea.value = receiptText;
+                    editModal.classList.remove('hidden');
                 });
             });
         }
+
+        // --- Friends View ---
+        const renderFriendsView = () => {
+            tabContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-1">
+                        <h2 class="text-2xl font-bold tracking-tight mb-4">Friends</h2>
+                        <form id="add-friend-form" class="flex items-center space-x-2 mb-6">
+                            <input id="friend-email-input" type="email" placeholder="Add friend by email" class="flex-grow p-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" required>
+                            <button type="submit" class="p-2 bg-gray-200 text-gray-600 rounded-md hover:bg-gray-300 transition-colors">+</button>
+                        </form>
+                        <div id="friends-list" class="space-y-2"></div>
+                    </div>
+                    <div id="friend-story-container" class="md:col-span-2 max-h-[70vh] overflow-y-auto pr-2">
+                        <div class="text-center text-gray-400 pt-16">Select a friend to view their story.</div>
+                    </div>
+                </div>
+            `;
+            attachFriendsListeners();
+            loadFriendsList();
+        };
+
+        const attachFriendsListeners = () => {
+            const form = document.getElementById('add-friend-form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const emailInput = document.getElementById('friend-email-input');
+                const email = emailInput.value;
+                if (!email) return;
+
+                const profilesRef = collection(db, 'profiles');
+                const q = query(profilesRef, where('email', '==', email));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    alert("User not found.");
+                    return;
+                }
+
+                const friendDoc = querySnapshot.docs[0];
+                const friendId = friendDoc.id;
+                const friendData = friendDoc.data();
+
+                const userFriendsRef = doc(db, `users/${currentUser.uid}/friends/${friendId}`);
+                await setDoc(userFriendsRef, {
+                    name: friendData.name,
+                    photoURL: friendData.photoURL,
+                    addedAt: serverTimestamp()
+                });
+
+                emailInput.value = '';
+            });
+        };
+
+        const loadFriendsList = () => {
+            const listEl = document.getElementById('friends-list');
+            const friendsQuery = query(collection(db, `users/${currentUser.uid}/friends`), orderBy('name'));
+            
+            friendsUnsubscribe = onSnapshot(friendsQuery, (snapshot) => {
+                let html = `<button data-uid="${currentUser.uid}" class="view-story-btn w-full text-left p-2 rounded-md font-semibold bg-gray-200 flex items-center space-x-3">
+                                <img src="${currentUser.photoURL}" class="h-8 w-8 rounded-full">
+                                <span>My Story</span>
+                            </button>`;
+                html += snapshot.docs.map(doc => {
+                    const friend = doc.data();
+                    return `<button data-uid="${doc.id}" data-name="${friend.name}" class="view-story-btn w-full text-left p-2 rounded-md hover:bg-gray-100 flex items-center space-x-3">
+                                <img src="${friend.photoURL}" class="h-8 w-8 rounded-full">
+                                <span class="text-gray-700">${friend.name}</span>
+                            </button>`;
+                }).join('');
+                listEl.innerHTML = html;
+
+                document.querySelectorAll('.view-story-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const uid = btn.dataset.uid;
+                        const name = btn.dataset.name || 'My';
+                        const isOwnStory = uid === currentUser.uid;
+                        const container = document.getElementById('friend-story-container');
+                        container.innerHTML = `
+                            <h2 class="text-2xl font-bold tracking-tight mb-4">${name}'s Story</h2>
+                            <div id="active-story-feed" class="space-y-4"></div>
+                        `;
+                        loadStory(uid, 'active-story-feed', isOwnStory);
+                    });
+                });
+            });
+        };
+        
+        // --- Story View ---
+        const renderStoryView = () => {
+            tabContent.innerHTML = `<div class="text-center py-20">
+                <h2 class="text-3xl font-bold tracking-tight">The Biographer's Desk</h2>
+                <p class="mt-4 text-lg text-gray-500">This feature is coming soon.</p>
+                <p class="mt-2 text-gray-500">Your AI biographer will soon compile your memories into scenes, chapters, and volumes of your life story.</p>
+            </div>`;
+        };
+
+        // --- Modal Event Listeners ---
+        const closeModal = (modal) => {
+            modal.classList.add('hidden');
+        };
+
+        cancelDeleteButton.addEventListener('click', () => closeModal(deleteModal));
+        confirmDeleteButton.addEventListener('click', async () => {
+            if (!receiptToDelete) return;
+            const deleteReceiptFn = httpsCallable(functions, 'deleteReceipt');
+            try {
+                await deleteReceiptFn({ receiptId: receiptToDelete });
+            } catch(error) {
+                console.error("Error deleting receipt:", error);
+                alert("Could not delete the receipt.");
+            } finally {
+                closeModal(deleteModal);
+                receiptToDelete = null;
+            }
+        });
+
+        cancelEditButton.addEventListener('click', () => closeModal(editModal));
+        saveEditButton.addEventListener('click', async () => {
+            if (!receiptToEdit) return;
+            const newText = editTextArea.value;
+            if (!newText.trim()) return;
+
+            const editReceiptFn = httpsCallable(functions, 'editReceipt');
+            try {
+                await editReceiptFn({ receiptId: receiptToEdit, newText });
+            } catch(error) {
+                console.error("Error editing receipt:", error);
+                alert("Could not save changes.");
+            } finally {
+                closeModal(editModal);
+                receiptToEdit = null;
+            }
+        });
 
     </script>
 </body>
