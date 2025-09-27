@@ -1,33 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-900 text-gray-100">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scribe | Your Life Story</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Custom scrollbar for a better dark mode experience */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-
-        /* Simple animations for modals */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-bg { animation: fadeIn 0.2s ease-out forwards; }
-        .modal-content { animation: scaleIn 0.2s ease-out forwards; }
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-color: #111827; color: #111827; }
+        .tab-inactive { border-color: transparent; color: #6b7280; }
+        .receipt-card:hover .receipt-actions { opacity: 1; }
     </style>
 </head>
-<body class="antialiased">
+<body class="bg-gray-50 text-gray-800 antialiased">
     <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         
         <!-- Login View -->
         <div id="login-view" class="hidden min-h-screen flex items-center justify-center">
-            <div class="text-center p-8">
-                <h1 class="text-5xl font-bold text-white">Scribe</h1>
-                <p class="mt-2 text-lg text-gray-400">Your life story, beautifully penned.</p>
-                <button id="login-button" class="mt-8 px-6 py-3 font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-500">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold tracking-tight text-gray-900">Scribe</h1>
+                <p class="mt-2 text-lg text-gray-600">Your life story, beautifully penned.</p>
+                <button id="login-button" class="mt-8 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-transform hover:scale-105">
                     Sign in with Google
                 </button>
             </div>
@@ -36,17 +32,17 @@
         <!-- Main App View -->
         <div id="main-view" class="hidden">
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold">Scribe</h1>
+                <h1 class="text-2xl font-bold text-gray-900">Scribe</h1>
                 <div id="user-profile" class="flex items-center space-x-3">
                     <!-- Profile info will be inserted here -->
                 </div>
             </header>
 
-            <div class="mb-6 border-b border-gray-700">
-                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                    <button id="tab-scribe" class="py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-400">Scribe</button>
-                    <button id="tab-friends" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500">Friends</button>
-                    <button id="tab-story" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-500">My Story</button>
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button id="tab-scribe" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-active">Scribe</button>
+                    <button id="tab-friends" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive">Friends</button>
+                    <button id="tab-story" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive">My Story</button>
                 </nav>
             </div>
 
@@ -57,31 +53,37 @@
 
     </div>
 
-    <!-- Modals -->
-    <div id="delete-modal" class="hidden fixed inset-0 z-50">
-        <div class="modal-bg fixed inset-0 bg-black bg-opacity-75"></div>
-        <div class="modal-content relative flex items-center justify-center min-h-screen">
-            <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-sm">
-                <h3 class="text-lg font-medium text-white">Delete Receipt</h3>
-                <p class="mt-2 text-sm text-gray-400">Are you sure? This action cannot be undone.</p>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button id="cancel-delete-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600">Cancel</button>
-                    <button id="confirm-delete-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-500">Delete</button>
-                </div>
+    <!-- Modals (hidden by default) -->
+    <div id="delete-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Delete Receipt</h3>
+            <div class="mt-2">
+                <p class="text-sm text-gray-500">Are you sure you want to delete this memory? This action cannot be undone.</p>
+            </div>
+            <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button id="confirm-delete-button" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm">
+                    Delete
+                </button>
+                <button id="cancel-delete-button" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="edit-modal" class="hidden fixed inset-0 z-50">
-        <div class="modal-bg fixed inset-0 bg-black bg-opacity-75"></div>
-        <div class="modal-content relative flex items-center justify-center min-h-screen">
-            <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-lg">
-                <h3 class="text-lg font-medium text-white">Edit Receipt</h3>
-                <textarea id="edit-textarea" rows="5" class="mt-4 w-full p-3 bg-gray-900 border border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button id="cancel-edit-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600">Cancel</button>
-                    <button id="save-edit-button" type="button" class="px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500">Save Changes</button>
-                </div>
+    <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Edit Receipt</h3>
+            <div class="mt-4">
+                <textarea id="edit-textarea" rows="5" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500"></textarea>
+            </div>
+            <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <button id="save-edit-button" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-800 text-base font-medium text-white hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 sm:col-start-2 sm:text-sm">
+                    Save Changes
+                </button>
+                <button id="cancel-edit-button" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -104,6 +106,7 @@
         let currentUser = null;
         let currentUnsubscribe = null;
         let friendsUnsubscribe = null;
+        
         let receiptToDelete = null;
         let receiptToEdit = null;
 
@@ -172,9 +175,9 @@
 
         const renderUserProfile = (user) => {
             userProfile.innerHTML = `
+                <span class="text-sm font-medium text-gray-700">${user.displayName}</span>
                 <img class="h-8 w-8 rounded-full" src="${user.photoURL}" alt="User profile picture">
-                <span class="text-sm font-medium text-gray-300">${user.displayName}</span>
-                <button id="logout-button" class="ml-2 text-xs text-gray-500 hover:text-gray-300">Logout</button>
+                <button id="logout-button" class="ml-2 text-sm text-gray-500 hover:text-gray-700">Logout</button>
             `;
             document.getElementById('logout-button').addEventListener('click', () => signOut(auth));
         };
@@ -185,18 +188,14 @@
         });
 
         const setActiveTab = (tabId) => {
-            Object.values(tabs).forEach(tab => {
-                tab.classList.remove('border-indigo-500', 'text-indigo-400');
-                tab.classList.add('border-transparent', 'text-gray-400', 'hover:text-gray-300', 'hover:border-gray-500');
-            });
-            tabs[tabId].classList.add('border-indigo-500', 'text-indigo-400');
-            tabs[tabId].classList.remove('border-transparent', 'text-gray-400', 'hover:text-gray-300', 'hover:border-gray-500');
+            Object.values(tabs).forEach(tab => tab.classList.replace('tab-active', 'tab-inactive'));
+            tabs[tabId].classList.replace('tab-inactive', 'tab-active');
             renderTabContent(tabId);
         };
         
         const renderTabContent = (tabId) => {
             if (currentUnsubscribe) currentUnsubscribe();
-            tabContent.innerHTML = '<div class="text-center py-20 text-gray-500">Loading...</div>';
+            tabContent.innerHTML = '<div class="text-center py-10 text-gray-500">Loading...</div>';
 
             switch(tabId) {
                 case 'scribe':
@@ -214,25 +213,24 @@
         // --- Scribe View ---
         const renderScribeView = () => {
             tabContent.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <h2 class="text-xl font-semibold mb-4">New Receipt</h2>
-                        <form id="scribe-form" class="bg-gray-800 p-4 rounded-lg">
-                            <textarea id="scribe-textarea" name="message" maxlength="200" placeholder="A new memory..." class="w-full p-2 bg-gray-900 border border-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" rows="4" required></textarea>
-                            <div class="flex justify-between items-center mt-3">
-                                <span id="char-counter" class="text-xs text-gray-500">200 characters left</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="scribe-form-container">
+                        <form id="scribe-form" class="bg-white p-6 rounded-lg shadow-sm border">
+                            <textarea id="scribe-textarea" name="message" maxlength="200" placeholder="What's your achievement today?" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500 resize-none" rows="4" required></textarea>
+                            <div class="flex justify-between items-center mt-4">
+                                <span id="char-counter" class="text-sm text-gray-500">200 characters left</span>
                                 <div class="flex items-center space-x-2">
-                                     <button id="ai-scribe-button" type="button" title="Pen My Receipt" class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-indigo-400">
+                                     <button id="ai-scribe-button" type="button" class="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 2.293a1 1 0 011.414 0l-1.06 1.06a1 1 0 010 1.414l-2.122 2.121a1 1 0 01-1.414 0l-1.06-1.06a1 1 0 010-1.414l2.12-2.121a1 1 0 011.414 0zM12.586 12.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0l-2.121 2.121a1 1 0 010 1.414l1.06 1.06zM3.414 16.586a1 1 0 010-1.414l2.121-2.121a1 1 0 011.414 0l-1.06-1.06a1 1 0 01-1.414 0L2.293 12.293a1 1 0 010-1.414l1.06-1.06a1 1 0 011.414 0l2.121 2.121a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0L3.414 13.707a1 1 0 010 1.414l-1.06 1.06a1 1 0 01-1.414 0l1.06-1.06z"/></svg>
                                      </button>
-                                     <button type="submit" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500">Save</button>
+                                     <button type="submit" class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 transition shadow-sm">Save Receipt</button>
                                 </div>
                             </div>
                         </form>
                     </div>
-                    <div>
-                        <h2 class="text-xl font-semibold mb-4">My Story</h2>
-                        <div id="story-feed" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
+                    <div id="story-feed-container" class="space-y-4">
+                        <h2 class="text-xl font-bold mb-4">My Story</h2>
+                        <div id="story-feed" class="space-y-4"></div>
                     </div>
                 </div>
             `;
@@ -256,13 +254,13 @@
                 if (!rawText.trim()) return;
                 
                 aiButton.disabled = true;
-                aiButton.innerHTML = `<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                aiButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
 
                 try {
                     const getEnhancedReceipt = httpsCallable(functions, 'getEnhancedReceipt');
                     const result = await getEnhancedReceipt({ text: rawText });
                     textarea.value = result.data.text;
-                    textarea.dispatchEvent(new Event('input'));
+                    textarea.dispatchEvent(new Event('input')); // Update counter
                 } catch (error) {
                     console.error("AI Scribe Error:", error);
                     alert("The AI Scribe couldn't respond. Please try again.");
@@ -295,22 +293,22 @@
 
             currentUnsubscribe = onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    feed.innerHTML = `<p class="text-center text-gray-500 py-8">No memories penned yet.</p>`;
+                    feed.innerHTML = `<p class="text-gray-500">No receipts yet.</p>`;
                     return;
                 }
                 feed.innerHTML = snapshot.docs.map(doc => {
                     const data = doc.data();
-                    const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Just now';
+                    const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Just now';
                     return `
-                        <div id="receipt-${doc.id}" class="bg-gray-800 p-4 rounded-lg group relative">
-                            <p class="text-gray-300">${data.message}</p>
-                            <p class="text-xs text-gray-500 mt-2">${date}</p>
+                        <div id="receipt-${doc.id}" class="receipt-card bg-white p-4 rounded-lg shadow-sm border group relative">
+                            <p class="text-gray-700">${data.message}</p>
+                            <p class="text-xs text-gray-400 mt-2">${date}</p>
                             ${isOwnStory ? `
-                            <div class="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button data-id="${doc.id}" class="edit-receipt-btn p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-indigo-400">
+                            <div class="receipt-actions absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button data-id="${doc.id}" class="edit-receipt-btn p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>
                                 </button>
-                                <button data-id="${doc.id}" class="delete-receipt-btn p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-red-500">
+                                <button data-id="${doc.id}" class="delete-receipt-btn p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
                             </div>
@@ -319,23 +317,26 @@
                     `;
                 }).join('');
 
-                if (isOwnStory) attachActionListeners();
+                if (isOwnStory) {
+                    attachActionListeners();
+                }
+            }, (error) => {
+                console.error("Error loading story:", error);
+                feed.innerHTML = `<p class="text-red-500">Could not load story.</p>`;
             });
         };
-        
+
         const attachActionListeners = () => {
              document.querySelectorAll('.delete-receipt-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                btn.addEventListener('click', () => {
                     receiptToDelete = btn.dataset.id;
                     deleteModal.classList.remove('hidden');
                 });
             });
 
             document.querySelectorAll('.edit-receipt-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    receiptToEdit = btn.dataset..id;
+                btn.addEventListener('click', async () => {
+                    receiptToEdit = btn.dataset.id;
                     const receiptText = document.querySelector(`#receipt-${receiptToEdit} p`).textContent;
                     editTextArea.value = receiptText;
                     editModal.classList.remove('hidden');
@@ -348,15 +349,15 @@
             tabContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="md:col-span-1">
-                        <h2 class="text-xl font-semibold mb-4">Friends</h2>
-                        <form id="add-friend-form" class="flex items-center space-x-2 mb-4">
-                            <input id="friend-email-input" type="email" placeholder="Add friend by email" class="flex-grow p-2 bg-gray-800 border border-gray-700 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                            <button type="submit" class="p-2 bg-gray-700 text-white rounded-md hover:bg-gray-600">+</button>
+                        <h2 class="text-xl font-bold mb-4">Friends</h2>
+                        <form id="add-friend-form" class="flex items-center space-x-2 mb-6">
+                            <input id="friend-email-input" type="email" placeholder="Add friend by email" class="flex-grow p-2 border border-gray-300 rounded-md shadow-sm focus:ring-gray-500 focus:border-gray-500" required>
+                            <button type="submit" class="p-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors">Add</button>
                         </form>
-                        <div id="friends-list" class="space-y-1"></div>
+                        <div id="friends-list" class="space-y-2"></div>
                     </div>
-                    <div id="friend-story-container" class="md:col-span-2 max-h-[70vh] overflow-y-auto pr-2">
-                        <div class="text-center text-gray-500 pt-16">Select a friend to view their story.</div>
+                    <div id="friend-story-container" class="md:col-span-2">
+                        <!-- Friend's story will be loaded here -->
                     </div>
                 </div>
             `;
@@ -401,15 +402,12 @@
             const friendsQuery = query(collection(db, `users/${currentUser.uid}/friends`), orderBy('name'));
             
             friendsUnsubscribe = onSnapshot(friendsQuery, (snapshot) => {
-                let html = `<button data-uid="${currentUser.uid}" class="view-story-btn w-full text-left p-2 rounded-md font-semibold bg-gray-700 flex items-center space-x-3">
-                                <img src="${currentUser.photoURL}" class="h-8 w-8 rounded-full">
-                                <span>My Story</span>
-                            </button>`;
+                let html = `<button data-uid="${currentUser.uid}" class="view-story-btn w-full text-left p-2 rounded-md font-semibold bg-gray-200">My Story</button>`;
                 html += snapshot.docs.map(doc => {
                     const friend = doc.data();
-                    return `<button data-uid="${doc.id}" data-name="${friend.name}" class="view-story-btn w-full text-left p-2 rounded-md hover:bg-gray-700 flex items-center space-x-3">
+                    return `<button data-uid="${doc.id}" data-name="${friend.name}" class="view-story-btn w-full text-left p-2 rounded-md hover:bg-gray-100 flex items-center space-x-3">
                                 <img src="${friend.photoURL}" class="h-8 w-8 rounded-full">
-                                <span class="text-gray-300">${friend.name}</span>
+                                <span>${friend.name}</span>
                             </button>`;
                 }).join('');
                 listEl.innerHTML = html;
@@ -421,8 +419,8 @@
                         const isOwnStory = uid === currentUser.uid;
                         const container = document.getElementById('friend-story-container');
                         container.innerHTML = `
-                            <h2 class="text-xl font-semibold mb-4">${name}'s Story</h2>
-                            <div id="active-story-feed" class="space-y-3"></div>
+                            <h2 class="text-xl font-bold mb-4">${name}'s Story</h2>
+                            <div id="active-story-feed" class="space-y-4"></div>
                         `;
                         loadStory(uid, 'active-story-feed', isOwnStory);
                     });
@@ -432,33 +430,36 @@
         
         // --- Story View ---
         const renderStoryView = () => {
-            tabContent.innerHTML = `<div class="text-center py-20">
-                <h2 class="text-2xl font-semibold">The Biographer's Desk</h2>
-                <p class="mt-2 text-gray-400">This feature is coming soon.</p>
+            tabContent.innerHTML = `<div class="text-center py-10">
+                <h2 class="text-2xl font-bold">My Story Biographer</h2>
+                <p class="mt-2 text-gray-600">This feature is coming soon. The AI Biographer will compile your receipts into scenes, chapters, and volumes of your life story.</p>
             </div>`;
         };
 
         // --- Modal Event Listeners ---
-        const closeModal = (modal) => {
-            modal.classList.add('hidden');
-        };
-
-        cancelDeleteButton.addEventListener('click', () => closeModal(deleteModal));
+        cancelDeleteButton.addEventListener('click', () => {
+            deleteModal.classList.add('hidden');
+            receiptToDelete = null;
+        });
         confirmDeleteButton.addEventListener('click', async () => {
             if (!receiptToDelete) return;
             const deleteReceiptFn = httpsCallable(functions, 'deleteReceipt');
             try {
                 await deleteReceiptFn({ receiptId: receiptToDelete });
+                document.getElementById(`receipt-${receiptToDelete}`).remove();
             } catch(error) {
                 console.error("Error deleting receipt:", error);
                 alert("Could not delete the receipt.");
             } finally {
-                closeModal(deleteModal);
+                deleteModal.classList.add('hidden');
                 receiptToDelete = null;
             }
         });
 
-        cancelEditButton.addEventListener('click', () => closeModal(editModal));
+        cancelEditButton.addEventListener('click', () => {
+            editModal.classList.add('hidden');
+            receiptToEdit = null;
+        });
         saveEditButton.addEventListener('click', async () => {
             if (!receiptToEdit) return;
             const newText = editTextArea.value;
@@ -467,11 +468,12 @@
             const editReceiptFn = httpsCallable(functions, 'editReceipt');
             try {
                 await editReceiptFn({ receiptId: receiptToEdit, newText });
+                document.querySelector(`#receipt-${receiptToEdit} p`).textContent = newText;
             } catch(error) {
                 console.error("Error editing receipt:", error);
                 alert("Could not save changes.");
             } finally {
-                closeModal(editModal);
+                editModal.classList.add('hidden');
                 receiptToEdit = null;
             }
         });
