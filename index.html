@@ -1,316 +1,416 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Receipts</title>
+    <title>Scribe</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .new-item { animation: fadeIn 0.5s ease-out; }
-        .hidden { display: none; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .receipt-card { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { border-bottom-color: #111827; color: #111827; }
+        .tab-inactive { border-bottom-color: transparent; color: #6b7280; }
     </style>
 </head>
-<body class="h-full antialiased text-gray-800">
+<body class="bg-gray-50 text-gray-800 antialiased">
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="flex flex-col items-center justify-center min-h-screen p-4">
-        <h1 class="text-4xl font-bold tracking-tight text-gray-900">Life Receipts</h1>
-        <p class="mt-2 text-lg text-gray-600">Your personal story, one moment at a time.</p>
-        <button id="sign-in-button" class="mt-8 flex items-center justify-center px-6 py-3 bg-white border border-gray-300 rounded-lg shadow-sm text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-            <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.269l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.269z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C41.38,36.168,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-            Sign in with Google
-        </button>
-    </div>
-
-    <!-- Main Application Content -->
-    <div id="app-content" class="w-full max-w-7xl mx-auto p-4 hidden">
-        <header class="flex items-center justify-between mb-8">
-            <h1 class="text-2xl font-bold text-gray-900">Life Receipts</h1>
-            <div id="user-profile" class="flex items-center space-x-4">
-                <img id="user-photo" class="w-10 h-10 rounded-full" src="" alt="User photo">
-                <span id="user-name" class="font-semibold text-gray-700"></span>
-                <button id="sign-out-button" class="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-100">Sign Out</button>
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Login View -->
+        <div id="login-view" class="min-h-screen flex items-center justify-center hidden">
+            <div class="text-center p-8 bg-white rounded-2xl shadow-lg border border-gray-100">
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">Scribe</h1>
+                <p class="text-gray-600 mb-6">Your personal AI biographer.</p>
+                <button id="google-signin-btn" class="bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-900 transition-all duration-300 flex items-center justify-center mx-auto shadow-md">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.574l6.19 5.238C42.021 35.826 44 30.137 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+                    Sign in with Google
+                </button>
             </div>
-        </header>
+        </div>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column: Input and User Info -->
-            <div class="lg:col-span-1 space-y-8">
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                    <h2 class="text-xl font-semibold mb-4">Add a New Receipt</h2>
-                    <form id="receipt-form">
-                        <textarea id="message-input" name="message" rows="5" class="w-full p-3 rounded-xl border-gray-300 focus:ring-2 focus:ring-indigo-500" placeholder="Write a quick note about your achievement..." required></textarea>
-                        <div class="flex items-center space-x-2 mt-4">
-                            <button type="submit" id="submit-button" class="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-transform transform hover:scale-105">Save Receipt</button>
-                            <button type="button" id="ai-scribe-button" class="px-4 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105" title="Let AI rewrite your note">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l.707-.707M6.343 17.657l-.707.707m12.728 0l.707.707M12 21v-1m-4.636-1.636l.707-.707m0 0a5 5 0 10-7.072 0l.001.001 7.07 7.071 7.072-7.07z" /></svg>
-                            </button>
-                        </div>
-                    </form>
+        <!-- Main App View -->
+        <div id="app-view" class="hidden">
+            <!-- Header -->
+            <header class="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Scribe</h1>
+                <div class="flex items-center space-x-4">
+                    <div id="user-profile" class="flex items-center space-x-3">
+                        <img id="user-photo" src="" alt="User photo" class="w-9 h-9 rounded-full">
+                        <span id="user-name" class="font-semibold text-gray-700 hidden sm:block"></span>
+                    </div>
+                    <button id="logout-btn" class="text-gray-500 hover:text-gray-800 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
                 </div>
-            </div>
+            </header>
 
-            <!-- Center Column: Story View (Dynamic) -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 id="story-viewer-title" class="text-xl font-semibold mb-4">My Story</h2>
-                <div id="story-viewer-list" class="space-y-4 h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                    <div id="story-loading-state" class="text-center py-10 text-gray-500">Loading...</div>
-                    <div id="story-empty-state" class="text-center py-10 text-gray-500 hidden">This story is waiting for its first chapter.</div>
+            <!-- Tab Navigation -->
+            <nav class="mb-8">
+                <div class="border-b border-gray-200">
+                    <div class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="tab-scribe" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-active">Scribe</button>
+                        <button id="tab-friends" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-inactive">Friends</button>
+                        <button id="tab-story" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition tab-inactive">My Story</button>
+                    </div>
                 </div>
-            </div>
+            </nav>
 
-            <!-- Right Column: Friends List -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 class="text-xl font-semibold mb-4">Friends</h2>
-                <form id="add-friend-form" class="flex space-x-2 mb-4">
-                    <input type="email" id="friend-email-input" placeholder="Add friend by email" class="w-full p-2 border border-gray-300 rounded-lg" required>
-                    <button type="submit" class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900">Add</button>
-                </form>
-                <div id="friends-list" class="space-y-2 h-[52vh] overflow-y-auto pr-2 custom-scrollbar">
-                     <div id="friends-empty-state" class="text-center py-10 text-gray-400">Add a friend to see their story.</div>
-                </div>
-            </div>
-        </main>
+            <!-- Main Content: Views will be rendered here -->
+            <main id="main-content">
+                <!-- Content will be dynamically inserted by JavaScript -->
+            </main>
+        </div>
     </div>
 
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, getDocs, orderBy, serverTimestamp, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
         import { firebaseConfig } from './firebase-config.js';
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, updateDoc, arrayUnion, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
-
+        // --- Firebase Initialization ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const functions = getFunctions(app);
-        
-        // Define the Cloud Function callable
-        const getEnhancedReceipt = httpsCallable(functions, 'getEnhancedReceipt');
 
-        // DOM Elements
-        const loginScreen = document.getElementById('login-screen');
-        const appContent = document.getElementById('app-content');
-        const signInButton = document.getElementById('sign-in-button');
-        const signOutButton = document.getElementById('sign-out-button');
-        const userPhoto = document.getElementById('user-photo');
-        const userName = document.getElementById('user-name');
-        
-        const form = document.getElementById('receipt-form');
-        const messageInput = document.getElementById('message-input');
-        const aiScribeButton = document.getElementById('ai-scribe-button');
-        
-        const storyViewerTitle = document.getElementById('story-viewer-title');
-        const storyViewerList = document.getElementById('story-viewer-list');
-        const storyLoadingState = document.getElementById('story-loading-state');
-        const storyEmptyState = document.getElementById('story-empty-state');
-        
-        const addFriendForm = document.getElementById('add-friend-form');
-        const friendEmailInput = document.getElementById('friend-email-input');
-        const friendsList = document.getElementById('friends-list');
-        const friendsEmptyState = document.getElementById('friends-empty-state');
-        
+        // --- Global State ---
         let currentUser = null;
-        let unsubscribeStoryViewer = null;
+        let currentView = 'scribe'; // 'scribe', 'friends', 'story'
+        let unsubscribeReceipts = null;
+        let unsubscribeFriends = null;
 
-        // --- AUTHENTICATION & PROFILE MANAGEMENT ---
-        const provider = new GoogleAuthProvider();
-        signInButton.addEventListener('click', () => signInWithPopup(auth, provider));
-        signOutButton.addEventListener('click', () => signOut(auth));
+        // --- UI Elements ---
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app-view');
+        const mainContent = document.getElementById('main-content');
 
-        onAuthStateChanged(auth, user => {
+        // --- Authentication ---
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                setupUIForLoggedInUser(user);
-                createUserProfile(user);
-                loadStory(user.uid, "My Story");
-                listenForFriends(user.uid);
+                await setupUserProfile(user);
+                renderApp();
+                loginView.classList.add('hidden');
+                appView.classList.remove('hidden');
             } else {
                 currentUser = null;
-                setupUIForLoggedOutUser();
+                if (unsubscribeReceipts) unsubscribeReceipts();
+                if (unsubscribeFriends) unsubscribeFriends();
+                loginView.classList.remove('hidden');
+                appView.classList.add('hidden');
             }
         });
 
-        // --- UI Setup Functions ---
-        function setupUIForLoggedInUser(user) {
-            loginScreen.classList.add('hidden');
-            appContent.classList.remove('hidden');
-            userName.textContent = user.displayName;
-            userPhoto.src = user.photoURL;
-        }
+        document.getElementById('google-signin-btn').addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => console.error("Sign in error", error));
+        });
 
-        function setupUIForLoggedOutUser() {
-            loginScreen.classList.remove('hidden');
-            appContent.classList.add('hidden');
-            if (unsubscribeStoryViewer) unsubscribeStoryViewer();
-        }
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-        async function createUserProfile(user) {
+        async function setupUserProfile(user) {
+            document.getElementById('user-photo').src = user.photoURL;
+            document.getElementById('user-name').textContent = user.displayName;
+            
             const profileRef = doc(db, 'profiles', user.uid);
-            await setDoc(profileRef, {
-                uid: user.uid,
-                email: user.email.toLowerCase(),
-                displayName: user.displayName,
-                photoURL: user.photoURL
-            }, { merge: true });
+            const profileSnap = await getDoc(profileRef);
+            if (!profileSnap.exists()) {
+                await setDoc(profileRef, {
+                    name: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    friends: []
+                });
+            }
+        }
+
+        // --- Tab Navigation ---
+        document.getElementById('tab-scribe').addEventListener('click', () => switchTab('scribe'));
+        document.getElementById('tab-friends').addEventListener('click', () => switchTab('friends'));
+        document.getElementById('tab-story').addEventListener('click', () => switchTab('story'));
+
+        function switchTab(tabName) {
+            currentView = tabName;
+            updateTabStyles();
+            renderApp();
+        }
+
+        function updateTabStyles() {
+            ['scribe', 'friends', 'story'].forEach(tabId => {
+                const tab = document.getElementById(`tab-${tabId}`);
+                if (tabId === currentView) {
+                    tab.classList.replace('tab-inactive', 'tab-active');
+                } else {
+                    tab.classList.replace('tab-active', 'tab-inactive');
+                }
+            });
+        }
+
+        // --- Main Render Function ---
+        function renderApp() {
+            mainContent.innerHTML = ''; // Clear content
+            if (!currentUser) return;
+
+            switch (currentView) {
+                case 'scribe':
+                    renderScribeView();
+                    break;
+                case 'friends':
+                    renderFriendsView();
+                    break;
+                case 'story':
+                    renderStoryView();
+                    break;
+            }
         }
         
-        // --- AI SCRIBE LOGIC ---
-        aiScribeButton.addEventListener('click', async () => {
-            const rawText = messageInput.value.trim();
-            if (!rawText) {
-                alert("Please write a note first.");
+        // --- View Renderers ---
+        function renderScribeView() {
+            mainContent.innerHTML = `
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+                        <textarea id="receipt-input" class="w-full p-4 text-lg border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent resize-none" rows="4" placeholder="What's on your mind?"></textarea>
+                        <div class="flex justify-end items-center mt-4">
+                             <button id="ai-scribe-btn" class="p-2 text-gray-500 hover:text-gray-900 rounded-full transition" title="Pen My Receipt">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button id="save-receipt-btn" class="bg-gray-800 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-900 transition ml-2">Save Receipt</button>
+                        </div>
+                    </div>
+                    <div id="receipts-feed" class="space-y-6"></div>
+                </div>
+            `;
+            attachScribeListeners();
+            listenForMyReceipts();
+        }
+        
+        function renderFriendsView() {
+            mainContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-1">
+                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                            <h2 class="text-xl font-bold mb-4">Add Friend</h2>
+                            <div id="add-friend-status"></div>
+                            <input type="email" id="friend-email-input" placeholder="Friend's email" class="w-full p-3 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent mb-3">
+                            <button id="add-friend-btn" class="w-full bg-gray-800 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-900 transition">Add</button>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mt-6">
+                            <h2 class="text-xl font-bold mb-4">My Friends</h2>
+                            <div id="friends-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+                    <div id="friend-story-container" class="md:col-span-2">
+                        <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[300px]">
+                            <h2 id="friend-story-title" class="text-2xl font-bold mb-6 text-gray-800">Select a friend to view their story</h2>
+                            <div id="friend-receipts-feed" class="space-y-6"></div>
+                         </div>
+                    </div>
+                </div>
+            `;
+            attachFriendsListeners();
+            listenForFriends();
+        }
+
+        function renderStoryView() {
+            mainContent.innerHTML = `
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center">
+                    <h2 class="text-3xl font-bold mb-4">My Story</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto mb-8">This is where your AI Biographer will turn your receipts into scenes, chapters, and volumes of your life story. This feature is coming soon!</p>
+                     <div class="flex justify-center items-center space-x-4">
+                        <button class="bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition cursor-not-allowed" disabled>Write this Week's Scene</button>
+                        <button class="bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition cursor-not-allowed" disabled>Write this Month's Chapter</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // --- Logic & Listeners ---
+
+        // SCRIBE LOGIC
+        function attachScribeListeners() {
+            const saveBtn = document.getElementById('save-receipt-btn');
+            const aiBtn = document.getElementById('ai-scribe-btn');
+            const input = document.getElementById('receipt-input');
+
+            saveBtn.addEventListener('click', async () => {
+                const message = input.value.trim();
+                if (!message) return;
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+                await addDoc(collection(db, `users/${currentUser.uid}/receipts`), {
+                    message,
+                    authorId: currentUser.uid,
+                    authorName: currentUser.displayName,
+                    authorPhoto: currentUser.photoURL,
+                    timestamp: serverTimestamp()
+                });
+                input.value = '';
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Receipt';
+            });
+            
+            aiBtn.addEventListener('click', async () => {
+                const rawText = input.value.trim();
+                if (!rawText) return;
+                aiBtn.disabled = true;
+                const originalIcon = aiBtn.innerHTML;
+                aiBtn.innerHTML = `<svg class="w-6 h-6 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                
+                try {
+                    const getEnhancedReceipt = httpsCallable(functions, 'getEnhancedReceipt');
+                    const result = await getEnhancedReceipt({ text: rawText });
+                    input.value = result.data.text;
+                } catch (error) {
+                    console.error("AI Scribe Error:", error);
+                    alert("The AI Scribe couldn't respond. Please try again.");
+                } finally {
+                    aiBtn.disabled = false;
+                    aiBtn.innerHTML = originalIcon;
+                }
+            });
+        }
+        
+        function listenForMyReceipts() {
+            if (unsubscribeReceipts) unsubscribeReceipts();
+            const receiptsRef = collection(db, `users/${currentUser.uid}/receipts`);
+            const q = query(receiptsRef, orderBy('timestamp', 'desc'));
+            unsubscribeReceipts = onSnapshot(q, (snapshot) => {
+                const feed = document.getElementById('receipts-feed');
+                if (!feed) return;
+                feed.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const card = createReceiptCard(data);
+                    feed.appendChild(card);
+                });
+            });
+        }
+
+        function createReceiptCard(data) {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-5 rounded-xl shadow-md border border-gray-100 receipt-card';
+            const date = data.timestamp ? data.timestamp.toDate().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Just now';
+            card.innerHTML = `
+                <p class="text-gray-800 text-lg">${data.message}</p>
+                <div class="flex items-center justify-end text-sm text-gray-400 mt-4">
+                    <span>${date}</span>
+                </div>
+            `;
+            return card;
+        }
+
+        // FRIENDS LOGIC
+        function attachFriendsListeners() {
+            document.getElementById('add-friend-btn').addEventListener('click', handleAddFriend);
+        }
+        
+        function listenForFriends() {
+             if (unsubscribeFriends) unsubscribeFriends();
+             const profileRef = doc(db, 'profiles', currentUser.uid);
+             unsubscribeFriends = onSnapshot(profileRef, (docSnap) => {
+                 if (docSnap.exists()) {
+                     const userData = docSnap.data();
+                     renderFriendsList(userData.friends || []);
+                 }
+             });
+        }
+
+        async function renderFriendsList(friendIds) {
+            const listEl = document.getElementById('friends-list');
+            if (!listEl) return;
+            listEl.innerHTML = '<p class="text-gray-500">Loading friends...</p>';
+            if (friendIds.length === 0) {
+                 listEl.innerHTML = '<p class="text-gray-500">You haven\'t added any friends yet.</p>';
+                 return;
+            }
+
+            const friendPromises = friendIds.map(id => getDoc(doc(db, 'profiles', id)));
+            const friendDocs = await Promise.all(friendPromises);
+            
+            listEl.innerHTML = '';
+            friendDocs.forEach(friendDoc => {
+                if(friendDoc.exists()) {
+                    const friendData = friendDoc.data();
+                    const friendEl = document.createElement('button');
+                    friendEl.className = 'flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition';
+                    friendEl.innerHTML = `
+                        <img src="${friendData.photoURL}" alt="${friendData.name}" class="w-10 h-10 rounded-full">
+                        <span class="font-semibold text-gray-700">${friendData.name}</span>
+                    `;
+                    friendEl.onclick = () => viewFriendStory(friendDoc.id, friendData.name);
+                    listEl.appendChild(friendEl);
+                }
+            });
+        }
+        
+        async function handleAddFriend() {
+            const emailInput = document.getElementById('friend-email-input');
+            const statusEl = document.getElementById('add-friend-status');
+            const email = emailInput.value.trim().toLowerCase();
+            if (!email) return;
+
+            statusEl.textContent = 'Searching...';
+            statusEl.className = 'text-blue-600 mb-2';
+
+            const profilesRef = collection(db, 'profiles');
+            const q = query(profilesRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                statusEl.textContent = 'User not found.';
+                statusEl.className = 'text-red-600 mb-2';
                 return;
             }
+            
+            const friendProfile = querySnapshot.docs[0];
+            const friendId = friendProfile.id;
 
-            const originalButtonContent = aiScribeButton.innerHTML;
-            aiScribeButton.disabled = true;
-            aiScribeButton.innerHTML = `<svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
-
-            try {
-                // Securely call the Cloud Function
-                const result = await getEnhancedReceipt({ text: rawText });
-                messageInput.value = result.data.text;
-            } catch (error) {
-                console.error("AI Scribe Error:", error);
-                alert("The AI Scribe couldn't rewrite your note. Please check the console for details.");
-            } finally {
-                aiScribeButton.disabled = false;
-                aiScribeButton.innerHTML = originalButtonContent;
-            }
-        });
-
-        // --- FRIENDS LOGIC ---
-        addFriendForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = friendEmailInput.value.trim().toLowerCase();
-            if (email === currentUser.email) {
-                alert("You can't add yourself as a friend.");
+            if (friendId === currentUser.uid) {
+                statusEl.textContent = "You can't add yourself!";
+                statusEl.className = 'text-yellow-600 mb-2';
                 return;
-            }
-            if (email) {
-                await addFriendByEmail(email);
-                addFriendForm.reset();
-            }
-        });
 
-        async function addFriendByEmail(email) {
-            if (!currentUser) return;
-            try {
-                const q = query(collection(db, "profiles"), where("email", "==", email));
-                const querySnapshot = await getDocs(q);
-                if (querySnapshot.empty) {
-                    alert("User not found. Make sure your friend has logged in at least once.");
+            }
+
+            const userProfileRef = doc(db, 'profiles', currentUser.uid);
+            await updateDoc(userProfileRef, {
+                friends: arrayUnion(friendId)
+            });
+            
+            emailInput.value = '';
+            statusEl.textContent = 'Friend added!';
+            statusEl.className = 'text-green-600 mb-2';
+        }
+        
+        let unsubscribeFriendReceipts = null;
+        function viewFriendStory(friendId, friendName) {
+            document.getElementById('friend-story-title').textContent = `${friendName}'s Story`;
+            const feed = document.getElementById('friend-receipts-feed');
+            feed.innerHTML = '<p class="text-gray-500">Loading story...</p>';
+
+            if (unsubscribeFriendReceipts) unsubscribeFriendReceipts();
+            const receiptsRef = collection(db, `users/${friendId}/receipts`);
+            const q = query(receiptsRef, orderBy('timestamp', 'desc'));
+            unsubscribeFriendReceipts = onSnapshot(q, (snapshot) => {
+                feed.innerHTML = '';
+                 if (snapshot.empty) {
+                    feed.innerHTML = '<p class="text-gray-500">This story has no entries yet.</p>';
                     return;
                 }
-                const friendProfile = querySnapshot.docs[0].data();
-                const myProfileRef = doc(db, 'profiles', currentUser.uid);
-                await updateDoc(myProfileRef, { friends: arrayUnion(friendProfile.uid) });
-                alert(`Added ${friendProfile.displayName} as a friend!`);
-            } catch (error) {
-                console.error("Error adding friend:", error);
-                alert("Could not add friend.");
-            }
-        }
-
-        function listenForFriends(uid) {
-            const myProfileRef = doc(db, 'profiles', uid);
-            onSnapshot(myProfileRef, async (docSnap) => {
-                const friendsContainer = document.getElementById('friends-list');
-                const emptyState = document.getElementById('friends-empty-state');
-                
-                friendsContainer.innerHTML = '';
-                
-                renderFriendItem({ uid: currentUser.uid, displayName: "My Story", photoURL: currentUser.photoURL }, true);
-
-                if (docSnap.exists() && docSnap.data().friends && docSnap.data().friends.length > 0) {
-                    emptyState.classList.add('hidden');
-                    const friendUids = docSnap.data().friends;
-                    for (const friendUid of friendUids) {
-                        const friendProfileSnap = await getDoc(doc(db, 'profiles', friendUid));
-                        if (friendProfileSnap.exists()) {
-                            renderFriendItem(friendProfileSnap.data());
-                        }
-                    }
-                } else {
-                    friendsContainer.appendChild(emptyState);
-                    emptyState.classList.remove('hidden');
-                }
-            });
-        }
-        
-        function renderFriendItem(profile, isMe = false) {
-             const friendElement = document.createElement('div');
-             friendElement.className = 'flex items-center p-2 rounded-lg cursor-pointer hover:bg-gray-100 new-item';
-             friendElement.innerHTML = `<img src="${profile.photoURL}" class="w-8 h-8 rounded-full mr-3"><span class="font-medium">${profile.displayName}</span>`;
-             friendElement.addEventListener('click', () => loadStory(profile.uid, isMe ? "My Story" : `${profile.displayName}'s Story`));
-             friendsList.appendChild(friendElement);
-        }
-
-        // --- STORY/RECEIPT LOGIC ---
-        function loadStory(uid, title) {
-            storyViewerTitle.textContent = title;
-            if (unsubscribeStoryViewer) unsubscribeStoryViewer();
-            unsubscribeStoryViewer = createSnapshotListener(uid, storyViewerList, storyLoadingState, storyEmptyState);
-        }
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (message && currentUser) {
-                const button = e.target.querySelector('#submit-button');
-                button.disabled = true;
-                button.textContent = 'Saving...';
-                await addDoc(collection(db, `users/${currentUser.uid}/receipts`), {
-                    message: message,
-                    timestamp: serverTimestamp(),
-                    dateString: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const card = createReceiptCard(data);
+                    feed.appendChild(card);
                 });
-                form.reset();
-                button.disabled = false;
-                button.textContent = 'Save Receipt';
-            }
-        });
-
-        function createSnapshotListener(uid, targetList, loadingEl, emptyEl) {
-            if (!uid) return;
-            const receiptsRef = collection(db, `users/${uid}/receipts`);
-            const q = query(receiptsRef, orderBy("timestamp", "desc"));
-            
-            loadingEl.style.display = 'block';
-            emptyEl.classList.add('hidden');
-            targetList.innerHTML = `<div id="story-loading-state" class="text-center py-10 text-gray-500">Loading...</div>`;
-
-            return onSnapshot(q, (querySnapshot) => {
-                targetList.innerHTML = '';
-                if (querySnapshot.empty) {
-                    targetList.appendChild(emptyEl);
-                    emptyState.classList.remove('hidden');
-                } else {
-                    querySnapshot.forEach((doc) => {
-                        const receipt = doc.data();
-                        const el = document.createElement('div');
-                        el.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'new-item');
-                        el.innerHTML = `<p class="text-gray-800">${receipt.message}</p><p class="text-xs text-gray-500 mt-2 text-right">${receipt.dateString || ''}</p>`;
-                        targetList.appendChild(el);
-                    });
-                }
-            }, (error) => {
-                console.error("Error fetching receipts:", error);
-                targetList.innerHTML = `<div class="text-center py-10 text-red-500">Error loading story.</div>`;
             });
         }
+
     </script>
 </body>
 </html>
